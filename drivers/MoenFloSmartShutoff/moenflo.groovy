@@ -4,7 +4,8 @@
     ANY KIND, either express or implied. See the License for the specific language governing permissions and
     limitations under the License.
  
-    v1.0.0   2021-07-31    Hubitat Package Manager support, bump version
+    v1.0.00  2021-08-08    Hubitat Package Manager support, bump version
+    v0.0.99  2021-08-08    Update import url to point to hubitat package manager
     v0.1.08  2021-01-24    Stop checking for last manual healthtest if request fails / id returns nothing
     v0.1.07  2020-07-30    Changed data type of attributes to string, updated debug message for latest hubitat health test
     v0.1.06  2020-07-13    Removed pending notification counts, causing unneeded events, add unit for tempF, round metrics for display
