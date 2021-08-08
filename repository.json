@@ -4,7 +4,7 @@
   "packages": [
     {
       "id": "0bd3c02f-347f-4395-9b5d-431b918a2c8a",
-      "name": "Moen Flo Smart Shutoff",
+      "name": "Moen Flo Integration",
       "category": "Integrations",
       "location": "https://raw.githubusercontent.com/dacmanj/hubitat/main/drivers/MoenFloSmartShutoff/packageManifest.json",
       "description": "Hubitat Integration for the Moen Flo Smart Shutoff",
