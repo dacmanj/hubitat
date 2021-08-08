@@ -4,12 +4,13 @@
   "version": "1.0.0",
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2021-07-31",
+  "releaseNotes": "1.0.0 Hubitat Package Manager support, bump version for package manager",
   "drivers": [
     {
       "id": "05c25baa-f341-400e-9980-8445bdca4b86",
       "name": "Moen Flo Smart Shutoff",
       "namespace": "dacmanj",
-      "location": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloSmartShutoff/moenflo.groovy",
+      "location": "https://raw.githubusercontent.com/dacmanj/hubitat/main/drivers/MoenFloSmartShutoff/moenflo.groovy",
       "required": true
     }
   ]
