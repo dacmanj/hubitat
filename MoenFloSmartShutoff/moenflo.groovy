@@ -1,20 +1,20 @@
 /**
- * Moen Flo Smart Shutoff for Hubitat by David Manuel is licensed under CC BY 4.0 see https://creativecommons.org/licenses/by/4.0
- * Software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
- * ANY KIND, either express or implied. See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * 2021-07-31 v1.0.0 - Hubitat Package Manager support, bump version
- * 2021-01-24 v0.1.08-alpha - Stop checking for last manual healthtest if request fails / id returns nothing
- * 2020-07-30 v0.1.07-alpha - Changed data type of attributes to string, updated debug message for latest hubitat health test
- * 2020-07-13 v0.1.06-alpha - Removed pending notification counts, causing unneeded events, add unit for tempF, round metrics for display
- * 2020-07-13 v0.1.05-alpha - Updated preferences save to separate out password updates
- * 2020-07-13 v0.1.04-alpha - Added last event and last health test to polling
- * 2020-07-13 v0.1.03-alpha - Update to login error logging/handling
- * 2020-07-12 v0.1.02-alpha - Default to First Device
- * 2020-07-12 v0.1.01-alpha - Add Debug Logging
- * 2020-07-12 v0.1.0-alpha - Initial Release
- *
+    Moen Flo Smart Shutoff for Hubitat by David Manuel is licensed under CC BY 4.0 see https://creativecommons.org/licenses/by/4.0
+    Software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+    ANY KIND, either express or implied. See the License for the specific language governing permissions and
+    limitations under the License.
+ 
+    v1.0.0          2021-07-31    Hubitat Package Manager support, bump version
+    v0.1.08-alpha   2021-01-24    Stop checking for last manual healthtest if request fails / id returns nothing
+    v0.1.07-alpha   2020-07-30    Changed data type of attributes to string, updated debug message for latest hubitat health test
+    v0.1.06-alpha   2020-07-13    Removed pending notification counts, causing unneeded events, add unit for tempF, round metrics for display
+    v0.1.05-alpha   2020-07-13    Updated preferences save to separate out password updates
+    v0.1.04-alpha   2020-07-13    Added last event and last health test to polling
+    v0.1.03-alpha   2020-07-13    Update to login error logging/handling
+    v0.1.02-alpha   2020-07-12    Default to First Device
+    v0.1.01-alpha   2020-07-12    Add Debug Logging
+    v0.1.0-alpha    2020-07-12    Initial Release
+ 
  */
 
 metadata {
