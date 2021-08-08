@@ -5,6 +5,8 @@
     "minimumHEVersion": "2.1.9",
     "dateReleased": "2021-07-31",
     "releaseNotes": "1.0.1 First package manager version, hubitat Package Manager support, bump version for package manager",
+    "communityLink": "https://community.hubitat.com/t/moen-flo-virtual-device/9677",
+    "documentationLink": "https://github.com/dacmanj/hubitat#readme",
     "drivers": [
         {
             "id": "05c25baa-f341-400e-9980-8445bdca4b86",
