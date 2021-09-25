@@ -4,7 +4,7 @@
     ANY KIND, either express or implied. See the License for the specific language governing permissions and
     limitations under the License.
 
-    v1.0.01  2021-09-25    Update to fetch 36-character api device id whenever preferences are saved.
+    v1.0.1   2021-09-25    Update to fetch 36-character api device id whenever preferences are saved.
     v1.0.00  2021-08-08    Hubitat Package Manager support, bump version
     v0.0.99  2021-08-08    Update import url to point to hubitat package manager
     v0.1.08  2021-01-24    Stop checking for last manual healthtest if request fails / id returns nothing
