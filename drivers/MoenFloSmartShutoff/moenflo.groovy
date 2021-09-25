@@ -3,7 +3,8 @@
     Software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
     ANY KIND, either express or implied. See the License for the specific language governing permissions and
     limitations under the License.
- 
+
+    v1.0.01  2021-09-25    Update to fetch 36-character api device id whenever preferences are saved.
     v1.0.00  2021-08-08    Hubitat Package Manager support, bump version
     v0.0.99  2021-08-08    Update import url to point to hubitat package manager
     v0.1.08  2021-01-24    Stop checking for last manual healthtest if request fails / id returns nothing
@@ -15,7 +16,7 @@
     v0.1.02  2020-07-12    Default to First Device
     v0.1.01  2020-07-12    Add Debug Logging
     v0.1.00  2020-07-12    Initial Release
- 
+
  */
 
 metadata {
@@ -58,12 +59,11 @@ metadata {
     preferences {
         input(name: "username", type: "string", title:"User Name", description: "Enter Moen Flo User Name", required: true, displayDuringSetup: true)
         input(name: "password", type: "password", title:"Password", description: "Enter Moen Flo Password (to set or change it)", displayDuringSetup: true)
-        input(name: "mac_address", type: "string", title:"Device Id", description: "Enter Device Id from MeetFlo.com (if you have multiple devices)", required: false, displayDuringSetup: true)
+        input(name: "mac_address", type: "string", title:"Device Id", description: "Enter Device Id from https://user.meetflo.com/settings/devices", required: false, displayDuringSetup: true)
         input(name: "revert_mode", type: "enum", title: "Revert Mode (after Sleep)", options: ["home","away","sleep"], defaultValue: "home")
         input(name: "polling_interval", type: "number", title: "Polling Interval (in Minutes)", range: 5..59, defaultValue: "10")
         input(name: "revert_minutes", type: "number", title: "Revert Time in Minutes (after Sleep)", defaultValue: 120)
         input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
-
     }
 
 }
@@ -186,7 +186,7 @@ def push(btn) {
 def getUserInfo() {
     def user_id = device.getDataValue("user_id")
     if (mac_address) { log.debug "Getting device id for: ${mac_address}"}
-    else { log.debug "Defaulting to first device found." }
+    else { log.debug "Defaulting to first device found. If you have more than one device, go to https://user.meetflo.com/settings/devices and find the device id there and enter it in the device settings." }
     def uri = "https://api-gw.meetflo.com/api/v2/users/${user_id}?expand=locations,alarmSettings"
     def response = make_authenticated_get(uri, "Get User Info")
     device.updateDataValue("location_id", response.data.locations[0].id)
@@ -209,7 +209,11 @@ def getDeviceInfo() {
         def data = response.data
         sendEvent(name: "gpm", value: round(data?.telemetry?.current?.gpm))
         sendEvent(name: "psi", value: round(data?.telemetry?.current?.psi))
-        sendEvent(name: "temperature", value: data?.telemetry?.current?.tempF, unit: "F")
+        def deviceTemperature = data?.telemetry?.current?.tempF
+        if (deviceTemperature > 150) {
+            deviceTemperature = deviceTemperature / 3
+        }
+        sendEvent(name: "temperature", value: deviceTemperature, unit: "F")
         sendEvent(name: "updated", value: data?.telemetry?.current?.updated)
         sendEvent(name: "valve", value: data?.valve?.target)
         sendEvent(name: "rssi", value: data?.connectivity?.rssi)
@@ -245,7 +249,7 @@ def getLastAlerts() {
 }
 
 def round(d, places = 2) {
-     return (d as double).round(2)
+     return (d as double).round(places)
 }
 
 def getConsumption() {
@@ -365,6 +369,7 @@ def make_authenticated_post(uri, body, request_type, success_status = [200, 202]
 
 def configure() {
     def token = device.getDataValue("token")
+    getUserInfo()
     if (password && password != "") {
         device.updateDataValue("encryptedPassword", encrypt(password))
         device.removeSetting("password")
