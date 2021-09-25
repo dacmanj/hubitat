@@ -4,6 +4,7 @@
     ANY KIND, either express or implied. See the License for the specific language governing permissions and
     limitations under the License.
 
+    v1.0.2   2021-09-25    Patch login sequence after configure
     v1.0.1   2021-09-25    Update to fetch 36-character api device id whenever preferences are saved.
     v1.0.00  2021-08-08    Hubitat Package Manager support, bump version
     v0.0.99  2021-08-08    Update import url to point to hubitat package manager
@@ -369,7 +370,6 @@ def make_authenticated_post(uri, body, request_type, success_status = [200, 202]
 
 def configure() {
     def token = device.getDataValue("token")
-    getUserInfo()
     if (password && password != "") {
         device.updateDataValue("encryptedPassword", encrypt(password))
         device.removeSetting("password")
@@ -381,6 +381,7 @@ def configure() {
         log.debug "Unable to configure -- invalid login"
         return
     }
+    getUserInfo()
     if (isConfigurationValid()) {
         sendEvent(name:"numberOfButtons", value: 3)
         schedulePolling()
