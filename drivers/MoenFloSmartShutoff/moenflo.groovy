@@ -216,7 +216,7 @@ def getDeviceInfo() {
     if (!device_id || device_id == "") {
         log.debug "Cannot complete device info request: No Device Id"
     } else {
-        if (logEnabled) {
+        if (logEnable) {
           def nickname = data.nickname
           def type = data.deviceType
           def model = data.deviceModel
@@ -303,7 +303,7 @@ def getHealthTestInfo() {
             device.removeDataValue("lastHubitatHealthtestId")
         }
     } else {
-        if (logEnabled) log.debug "Skipping Healthtest Update: No Hubitat Health Test Id Found"
+        if (logEnable) log.debug "Skipping Healthtest Update: No Hubitat Health Test Id Found"
     }
 }
 
