@@ -4,6 +4,7 @@
     ANY KIND, either express or implied. See the License for the specific language governing permissions and
     limitations under the License.
 
+    v1.0.5   2021-09-27    Fix selection of location id to match device
     v1.0.4   2021-09-27    Patch for multiple location support - fix selection of location id to match device
     v1.0.3   2021-09-27    Add error to logging if device id entered is not located
     v1.0.2   2021-09-25    Patch login sequence after configure
