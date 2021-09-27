@@ -115,6 +115,7 @@ def schedulePolling() {
 
 def pollMoen() {
     if (logEnable) log.debug("Polling Moen")
+    getUserInfo()
     getDeviceInfo()
     getHealthTestInfo()
     getConsumption()
@@ -187,7 +188,10 @@ def push(btn) {
 
 def getUserInfo() {
     def user_id = device.getDataValue("user_id")
-    if (mac_address) { log.debug "Getting device id for: ${mac_address}"}
+    if (mac_address) {
+      mac_address = mac_address.trim()
+      log.debug "Getting device id for: ${mac_address}"
+    }
     else { log.debug "Defaulting to first device found. If you have more than one device, go to https://user.meetflo.com/settings/devices and find the device id there and enter it in the device settings." }
     def uri = "https://api-gw.meetflo.com/api/v2/users/${user_id}?expand=locations,alarmSettings"
     def response = make_authenticated_get(uri, "Get User Info")
@@ -201,6 +205,9 @@ def getUserInfo() {
     }
     if (!device.getDataValue("device_id")) {
         log.debug "Unable to locate device id ${mac_address}"
+        device.updateDataValue("device_id","")
+        state.configured = false
+
     }
 }
 
