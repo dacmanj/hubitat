@@ -4,6 +4,7 @@
     ANY KIND, either express or implied. See the License for the specific language governing permissions and
     limitations under the License.
 
+    v1.0.4   2021-09-27    Patch for multiple location support
     v1.0.3   2021-09-27    Add error to logging if device id entered is not located
     v1.0.2   2021-09-25    Patch login sequence after configure
     v1.0.1   2021-09-25    Update to fetch 36-character api device id whenever preferences are saved.
@@ -115,7 +116,6 @@ def schedulePolling() {
 
 def pollMoen() {
     if (logEnable) log.debug("Polling Moen")
-    getUserInfo()
     getDeviceInfo()
     getHealthTestInfo()
     getConsumption()
@@ -196,12 +196,17 @@ def getUserInfo() {
     def uri = "https://api-gw.meetflo.com/api/v2/users/${user_id}?expand=locations,alarmSettings"
     def response = make_authenticated_get(uri, "Get User Info")
     device.updateDataValue("location_id", response.data.locations[0].id)
-    response.data.locations[0].devices.each {
-        if(it.macAddress == mac_address || !mac_address || mac_address == "") {
-            device.updateDataValue("device_id", it.id)
-            device.updateSetting("mac_address", it.macAddress)
-            if(logEnable) log.debug "Found device id: ${it.id}"
-        }
+
+    response.data.locations.each {
+      def location = it
+      location.devices.each {
+          if(it.macAddress == mac_address || !mac_address || mac_address == "") {
+              device.updateDataValue("device_id", it.id)
+              device.updateSetting("mac_address", it.macAddress)
+              if(logEnable) log.debug "Found device id: ${it.id}"
+          }
+      }
+
     }
     if (!device.getDataValue("device_id")) {
         log.debug "Unable to locate device id ${mac_address}"

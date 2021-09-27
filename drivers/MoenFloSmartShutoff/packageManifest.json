@@ -1,10 +1,10 @@
 {
     "packageName": "Moen Flo Smart Shutoff",
     "author": "David Manuel",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "minimumHEVersion": "2.1.9",
     "dateReleased": "2021-09-27",
-    "releaseNotes": "Add error to logging if device id entered is not located",
+    "releaseNotes": "Patch for multiple location support",
     "communityLink": "https://community.hubitat.com/t/moen-flo-virtual-device/9677",
     "documentationLink": "https://github.com/dacmanj/hubitat#readme",
     "drivers": [
