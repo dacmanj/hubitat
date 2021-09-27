@@ -216,6 +216,9 @@ def getDeviceInfo() {
     if (!device_id || device_id == "") {
         log.debug "Cannot complete device info request: No Device Id"
     } else {
+        def uri = "https://api-gw.meetflo.com/api/v2/devices/${device_id}"
+        def response = make_authenticated_get(uri, "Get Device")
+        def data = response.data
         if (logEnable) {
           def nickname = data.nickname
           def type = data.deviceType
@@ -224,9 +227,7 @@ def getDeviceInfo() {
           log.debug "Device Type: ${type}"
           log.debug "Device Model: ${model}"
         }
-        def uri = "https://api-gw.meetflo.com/api/v2/devices/${device_id}"
-        def response = make_authenticated_get(uri, "Get Device")
-        def data = response.data
+
         sendEvent(name: "gpm", value: round(data?.telemetry?.current?.gpm))
         sendEvent(name: "psi", value: round(data?.telemetry?.current?.psi))
         def deviceTemperature = data?.telemetry?.current?.tempF
