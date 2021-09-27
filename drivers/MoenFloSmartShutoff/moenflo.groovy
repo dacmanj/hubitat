@@ -197,8 +197,7 @@ def getUserInfo() {
     def response = make_authenticated_get(uri, "Get User Info")
     device.updateDataValue("location_id", response.data.locations[0].id)
 
-    response.data.locations.each {
-      def location = it
+    response.data.locations.each { location ->
       location.devices.each {
           if(it.macAddress == mac_address || !mac_address || mac_address == "") {
               device.updateDataValue("device_id", it.id)
