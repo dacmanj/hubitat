@@ -4,6 +4,7 @@
     ANY KIND, either express or implied. See the License for the specific language governing permissions and
     limitations under the License.
 
+    v1.0.3   2021-09-27    Add error to logging if device id entered is not located
     v1.0.2   2021-09-25    Patch login sequence after configure
     v1.0.1   2021-09-25    Update to fetch 36-character api device id whenever preferences are saved.
     v1.0.00  2021-08-08    Hubitat Package Manager support, bump version
@@ -198,6 +199,9 @@ def getUserInfo() {
             if(logEnable) log.debug "Found device id: ${it.id}"
         }
     }
+    if (!device.getDataValue("device_id")) {
+        log.debug "Unable to locate device id ${mac_address}"
+    }
 }
 
 def getDeviceInfo() {
@@ -250,7 +254,12 @@ def getLastAlerts() {
 }
 
 def round(d, places = 2) {
-     return (d as double).round(places)
+    if (d) {
+        return (d as double).round(places)
+    }
+    else {
+        return d
+    }
 }
 
 def getConsumption() {
