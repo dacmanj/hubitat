@@ -4,6 +4,7 @@
     ANY KIND, either express or implied. See the License for the specific language governing permissions and
     limitations under the License.
 
+    v1.0.6   2021-09-28    Fix selection of location id to match device
     v1.0.5   2021-09-27    Fix selection of location id to match device
     v1.0.4   2021-09-27    Patch for multiple location support - fix selection of location id to match device
     v1.0.3   2021-09-27    Add error to logging if device id entered is not located
@@ -196,44 +197,44 @@ def getUserInfo() {
     else { log.debug "Defaulting to first device found. If you have more than one device, go to https://user.meetflo.com/settings/devices and find the device id there and enter it in the device settings." }
     def uri = "https://api-gw.meetflo.com/api/v2/users/${user_id}?expand=locations,alarmSettings"
     def response = make_authenticated_get(uri, "Get User Info")
-
     response.data.locations.each { location ->
-      device.updateDataValue("location_id", location.id)
       location.devices.each {
           if(it.macAddress == mac_address || !mac_address || mac_address == "") {
               device.updateDataValue("location_id", location.id)
               device.updateDataValue("device_id", it.id)
               device.updateSetting("mac_address", it.macAddress)
+              device.updateDataValue("locationNickname", location.nickname)
+              device.updateDataValue("locationAddress", location.address)
               if(logEnable) log.debug "Found device id: ${it.id}"
           }
       }
-
     }
+
     if (!device.getDataValue("device_id")) {
-        log.debug "Unable to locate device id ${mac_address}"
+        log.error "Unable to locate device id ${mac_address}"
         device.updateDataValue("device_id","")
         state.configured = false
-
     }
+
+    if(!device.getDataValue("location_id")) {
+      log.error "No location id found."
+      state.configured = false
+    }
+
 }
 
 def getDeviceInfo() {
     def device_id = device.getDataValue("device_id")
     if (!device_id || device_id == "") {
-        log.debug "Cannot complete device info request: No Device Id"
+        log.error "Cannot complete device info request: No Device Id"
     } else {
         def uri = "https://api-gw.meetflo.com/api/v2/devices/${device_id}"
         def response = make_authenticated_get(uri, "Get Device")
         def data = response.data
-        if (logEnable) {
-          def nickname = data.nickname
-          def type = data.deviceType
-          def model = data.deviceModel
-          log.debug "Device Nickname: ${nickname}"
-          log.debug "Device Type: ${type}"
-          log.debug "Device Model: ${model}"
-        }
-
+        device.updateDataValue("deviceNickname", data.nickname)
+        device.updateDataValue("deviceType", data.deviceType)
+        device.updateDataValue("deviceModel", data.deviceModel)
+        device.updateDataValue("firmwareVersion", data.fwVersion)
         sendEvent(name: "gpm", value: round(data?.telemetry?.current?.gpm))
         sendEvent(name: "psi", value: round(data?.telemetry?.current?.psi))
         def deviceTemperature = data?.telemetry?.current?.tempF
@@ -254,7 +255,7 @@ def getDeviceInfo() {
 def getLastAlerts() {
     def device_id = device.getDataValue("device_id")
     if (!device_id || device_id == "") {
-        log.debug "Cannot fetch alerts: No Device Id"
+        log.error "Cannot fetch alerts: No Device Id"
     } else {
         def uri = "https://api-gw.meetflo.com/api/v2/alerts?isInternalAlarm=false&deviceId=${device_id}"
         def response = make_authenticated_get(uri, "Get Alerts")
@@ -291,7 +292,7 @@ def getConsumption() {
     def uri = "https://api-gw.meetflo.com/api/v2/water/consumption?startDate=${startDate}&endDate=${endDate}&locationId=${location_id}&interval=1h"
 
     if (!location_id || location_id == "") {
-        log.debug "No location id: Consumption info request failed."
+        log.error "No location id: Consumption info request failed."
     } else {
         def response = make_authenticated_get(uri, "Get Consumption")
         def data = response.data
@@ -310,7 +311,7 @@ def getHealthTestInfo() {
             device.removeDataValue("lastHubitatHealthtestId")
         }
     } else {
-        if (logEnable) log.debug "Skipping Healthtest Update: No Hubitat Health Test Id Found"
+        if (logEnable) log.info "Skipping Healthtest Update: No Hubitat Health Test Id Found"
     }
 }
 
@@ -332,15 +333,15 @@ def make_authenticated_get(uri, request_type, success_status = [200, 202]) {
                     response = resp;
                 }
                 else {
-                    log.debug "${request_type} Failed (${response.status}): ${response.data}"
+                    log.error "${request_type} Failed (${response.status}): ${response.data}"
                     login()
                 }
               }
         }
         catch (Exception e) {
-            log.debug "${request_type} Exception: ${e}"
+            log.error "${request_type} Exception: ${e}"
             if (e.getMessage().contains("Forbidden") || e.getMessage().contains("Unauthorized")) {
-                log.debug "Refreshing token..."
+                log.debug "Forbidden/Unauthorized Exception... Refreshing token..."
                 login()
             }
         }
@@ -386,9 +387,9 @@ def make_authenticated_post(uri, body, request_type, success_status = [200, 202]
             }
         }
         catch (Exception e) {
-            log.debug "${request_type} Exception: ${e}"
+            log.error "${request_type} Exception: ${e}"
             if (e.getMessage().contains("Forbidden") || e.getMessage().contains("Unauthorized")) {
-                log.debug "Refreshing token..."
+                log.debug "Forbidden/Unauthorized Exception... Refreshing token..."
                 login()
             }
         }
@@ -409,7 +410,7 @@ def configure() {
         }
         login()
     } else if (!token || token == "") {
-        log.debug "Unable to configure -- invalid login"
+        log.error "Unable to configure -- invalid login"
         return
     }
     getUserInfo()
@@ -439,7 +440,7 @@ def login() {
     def uri = "https://api.meetflo.com/api/v1/users/auth"
     def pw = decrypt(device.getDataValue("encryptedPassword"))
     if (!pw || pw == "") {
-        log.debug("Login Failed: No password")
+        log.error("Login Failed: No password")
     } else {
         def body = [username:username, password:pw]
         def headers = [:]
@@ -455,14 +456,14 @@ def login() {
                         if (!state.configured) { getUserInfo() }
                     }
                     else {
-                        log.debug "Login Failed: (${response.status}) ${response.data}"
+                        log.error "Login Failed: (${response.status}) ${response.data}"
                         state.configured = false
                     }
               }
         }
         catch (Exception e) {
-            log.debug "Login exception: ${e}"
-            log.debug "Login Failed: Please confirm your Flo Credentials"
+            log.error "Login exception: ${e}"
+            log.error "Login Failed: Please confirm your Flo Credentials"
             state.configured = false
         }
     }
