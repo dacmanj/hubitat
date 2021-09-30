@@ -25,7 +25,7 @@
  */
 
 metadata {
-    definition (name: "Moen Flo Smart Shutoff", namespace: "dacmanj", author: "David Manuel", importUrl: "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloSmartShutoff/moenflo.groovy") {
+    definition (name: "Moen Flo Shutoff Valve", namespace: "dacmanj", author: "David Manuel", importUrl: "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloSmartShutoff/moenflo.groovy") {
         capability "Valve"
         capability "PushableButton"
         capability "LocationMode"
@@ -36,7 +36,7 @@ metadata {
         command "home"
         command "away"
         command "sleepMode"
-        command "logout"
+        command "reset"
         command "manualHealthTest"
         command "pollMoen"
 
@@ -62,9 +62,6 @@ metadata {
     }
 
     preferences {
-        input(name: "username", type: "string", title:"User Name", description: "Enter Moen Flo User Name", required: true, displayDuringSetup: true)
-        input(name: "password", type: "password", title:"Password", description: "Enter Moen Flo Password (to set or change it)", displayDuringSetup: true)
-        input(name: "mac_address", type: "string", title:"Device Id", description: "Enter Device Id from https://user.meetflo.com/settings/devices", required: false, displayDuringSetup: true)
         input(name: "revert_mode", type: "enum", title: "Revert Mode (after Sleep)", options: ["home","away","sleep"], defaultValue: "home")
         input(name: "polling_interval", type: "number", title: "Polling Interval (in Minutes)", range: 5..59, defaultValue: "10")
         input(name: "revert_minutes", type: "number", title: "Revert Time in Minutes (after Sleep)", defaultValue: 120)
@@ -79,10 +76,10 @@ def logsOff(){
 }
 
 def open() {
-    valve_update("open")
+    valveUpdate("open")
 }
 
-def logout() {
+def reset() {
     state.clear()
     unschedule()
     device.updateDataValue("token","")
@@ -101,6 +98,8 @@ def updated() {
 }
 
 def installed() {
+    log.debug "start device installed()"
+    configure()
     runIn(1800,logsOff)
 }
 
@@ -110,8 +109,7 @@ def unschedulePolling() {
 
 def schedulePolling() {
     unschedule(pollMoen)
-    def pw = device.getDataValue("encryptedPassword")
-    if (polling_interval != "None" && pw && pw != "") {
+    if (polling_interval != "None") {
         schedule("0 0/${polling_interval} * 1/1 * ? *", pollMoen)
     }
 }
@@ -125,7 +123,7 @@ def pollMoen() {
 }
 
 def close() {
-    valve_update("closed")
+    valveUpdate("closed")
 }
 
 def home() {
@@ -142,8 +140,8 @@ def sleepMode() {
 
 def setMode(mode) {
     if (logEnable) log.debug "Setting Flo mode to ${mode}"
-    def location_id = device.getDataValue("location_id")
-    def uri = "https://api-gw.meetflo.com/api/v2/locations/${location_id}/systemMode"
+    def locationId = device.getDataValue("locationId")
+    def uri = "https://api-gw.meetflo.com/api/v2/locations/${locationId}/systemMode"
     def body = [target:mode]
     def headers = [:]
     headers.put("Content-Type", "application/json")
@@ -152,29 +150,17 @@ def setMode(mode) {
         body.put("revertMinutes", revert_minutes)
         body.put("revertMode", revert_mode)
     }
-
-    if (!location_id || location_id == "") {
-        log.debug "Failed to set mode: No Location Id"
-    } else if (!mode || mode == "") {
-        log.debug "Failed to set mode: No Location Id"
-    } else {
-        def response = make_authenticated_post(uri, body, "Mode Update", [204])
-        sendEvent(name: "mode", value: mode)
-    }
-
+    def response = parent.make_authenticated_post(uri, body, "Mode Update", [204])
+    sendEvent(name: "mode", value: mode)
 }
 
-def valve_update(target) {
-    def device_id = device.getDataValue("device_id")
-    if (device_id && device_id != null) {
-        def uri = "https://api-gw.meetflo.com/api/v2/devices/${device_id}"
-        if (logEnable) log.debug "Updating valve status to ${target}"
-        def body = [valve:[target: target]]
-        def response = make_authenticated_post(uri, body, "Valve Update")
-        sendEvent(name: "valve", value: response?.data?.valve?.target)
-    } else {
-        log.debug "Failed to update: no device_id found"
-    }
+def valveUpdate(target) {
+    def deviceId = device.deviceNetworkId
+    def uri = "https://api-gw.meetflo.com/api/v2/devices/${deviceId}"
+    if (logEnable) log.debug "Updating valve status to ${target}"
+    def body = [valve:[target: target]]
+    def response = parent.make_authenticated_post(uri, body, "Valve Update")
+    sendEvent(name: "valve", value: response?.data?.valve?.target)
 }
 
 def push(btn) {
@@ -189,88 +175,56 @@ def push(btn) {
 }
 
 def getUserInfo() {
-    def user_id = device.getDataValue("user_id")
-    if (mac_address) {
-      mac_address = mac_address.trim()
-      log.debug "Getting device id for: ${mac_address}"
-    }
-    else { log.debug "Defaulting to first device found. If you have more than one device, go to https://user.meetflo.com/settings/devices and find the device id there and enter it in the device settings." }
-    def uri = "https://api-gw.meetflo.com/api/v2/users/${user_id}?expand=locations,alarmSettings"
-    def response = make_authenticated_get(uri, "Get User Info")
-    response.data.locations.each { location ->
-      location.devices.each {
-          if(it.macAddress == mac_address || !mac_address || mac_address == "") {
-              device.updateDataValue("location_id", location.id)
-              device.updateDataValue("device_id", it.id)
-              device.updateSetting("mac_address", it.macAddress)
-              device.updateDataValue("locationNickname", location.nickname)
-              device.updateDataValue("locationAddress", location.address)
-              if(logEnable) log.debug "Found device id: ${it.id}"
-          }
-      }
-    }
-
-    if (!device.getDataValue("device_id")) {
-        log.error "Unable to locate device id ${mac_address}"
-        device.updateDataValue("device_id","")
-        state.configured = false
-    }
-
-    if(!device.getDataValue("location_id")) {
-      log.error "No location id found."
-      state.configured = false
-    }
-
+    def userId = parent.state.user_id
+    if (logEnable) log.debug "Getting device data for: ${device.deviceNetworkId}"
+    def uri = "https://api-gw.meetflo.com/api/v2/users/${userId}?expand=locations,alarmSettings"
+    def response = parent.make_authenticated_get(uri, "Get User Info")
+    def deviceInfo = parent.state.devicesCache[device.deviceNetworkId]
+    def location = parent.state.locationsCache[deviceInfo.location.id]
+    device.updateDataValue("locationId", deviceInfo?.location.id)
+    device.updateDataValue("userId", userId)
+    device.updateDataValue("deviceId", deviceInfo?.id)
+    device.updateSetting("macAddress", deviceInfo?.macAddress)
+    device.updateDataValue("locationNickname", location?.nickname)
+    device.updateDataValue("locationAddress", location?.address)
 }
 
 def getDeviceInfo() {
-    def device_id = device.getDataValue("device_id")
-    if (!device_id || device_id == "") {
-        log.error "Cannot complete device info request: No Device Id"
-    } else {
-        def uri = "https://api-gw.meetflo.com/api/v2/devices/${device_id}"
-        def response = make_authenticated_get(uri, "Get Device")
-        def data = response.data
-        device.updateDataValue("deviceNickname", data.nickname)
-        device.updateDataValue("deviceType", data.deviceType)
-        device.updateDataValue("deviceModel", data.deviceModel)
-        device.updateDataValue("firmwareVersion", data.fwVersion)
-        sendEvent(name: "gpm", value: round(data?.telemetry?.current?.gpm))
-        sendEvent(name: "psi", value: round(data?.telemetry?.current?.psi))
-        def deviceTemperature = data?.telemetry?.current?.tempF
-        if (deviceTemperature > 150) {
-            deviceTemperature = deviceTemperature / 3
-        }
-        sendEvent(name: "temperature", value: deviceTemperature, unit: "F")
-        sendEvent(name: "updated", value: data?.telemetry?.current?.updated)
-        sendEvent(name: "valve", value: data?.valve?.target)
-        sendEvent(name: "rssi", value: data?.connectivity?.rssi)
-        sendEvent(name: "ssid", value: data?.connectivity?.ssid)
-        def system_mode = data?.fwProperties?.system_mode
-        def SYSTEM_MODES = [2: "home", 3: "away", 5: "sleep"]
-        sendEvent(name: "mode", value: SYSTEM_MODES[system_mode])
+    def deviceId = device.deviceNetworkId
+    def deviceInfo = parent.getDeviceData(deviceId)
+    device.updateDataValue("deviceNickname", deviceInfo?.nickname)
+    device.updateDataValue("deviceType", deviceInfo?.deviceType)
+    device.updateDataValue("deviceModel", deviceInfo?.deviceModel)
+    device.updateDataValue("firmwareVersion", deviceInfo?.fwVersion)
+    sendEvent(name: "gpm", value: round(deviceInfo?.telemetry?.current?.gpm))
+    sendEvent(name: "psi", value: round(deviceInfo?.telemetry?.current?.psi))
+    def deviceTemperature = deviceInfo?.telemetry?.current?.tempF
+    if (deviceTemperature > 150) {
+        deviceTemperature = deviceTemperature / 3
     }
+    sendEvent(name: "temperature", value: deviceTemperature, unit: "F")
+    sendEvent(name: "updated", value: deviceInfo?.telemetry?.current?.updated)
+    sendEvent(name: "valve", value: deviceInfo?.valve?.target)
+    sendEvent(name: "rssi", value: deviceInfo?.connectivity?.rssi)
+    sendEvent(name: "ssid", value: deviceInfo?.connectivity?.ssid)
+    def system_mode = deviceInfo?.fwProperties?.system_mode
+    def SYSTEM_MODES = [2: "home", 3: "away", 5: "sleep"]
+    sendEvent(name: "mode", value: SYSTEM_MODES[system_mode])
 }
 
 def getLastAlerts() {
-    def device_id = device.getDataValue("device_id")
-    if (!device_id || device_id == "") {
-        log.error "Cannot fetch alerts: No Device Id"
-    } else {
-        def uri = "https://api-gw.meetflo.com/api/v2/alerts?isInternalAlarm=false&deviceId=${device_id}"
-        def response = make_authenticated_get(uri, "Get Alerts")
-        def data = response.data.items
-        if (data) {
-            sendEvent(name: "lastEvent", value: data[0]?.displayTitle)
-            sendEvent(name: "lastEventDetail", value: data[0].displayMessage)
-            sendEvent(name: "lastEventDateTime", value: data[0].createAt)
-            for (alert in data) {
-                if (alert?.healthTest?.roundId) {
-                    sendEvent(name: "lastHealthTestStatus", value: alert.displayTitle)
-                    sendEvent(name: "lastHealthTestDetail", value: alert.displayMessage)
-                    sendEvent(name: "lastHealthTestDateTime", value: alert.createAt)
-                    break;
-                }
+    def deviceId = device.deviceNetworkId
+    def data = parent.getLastDeviceAlert(deviceId)
+    if (data) {
+        sendEvent(name: "lastEvent", value: data[0]?.displayTitle)
+        sendEvent(name: "lastEventDetail", value: data[0].displayMessage)
+        sendEvent(name: "lastEventDateTime", value: data[0].createAt)
+        for (alert in data) {
+            if (alert?.healthTest?.roundId) {
+                sendEvent(name: "lastHealthTestStatus", value: alert.displayTitle)
+                sendEvent(name: "lastHealthTestDetail", value: alert.displayMessage)
+                sendEvent(name: "lastHealthTestDateTime", value: alert.createAt)
+                break;
             }
         }
     }
@@ -286,26 +240,21 @@ def round(d, places = 2) {
 }
 
 def getConsumption() {
-    def location_id = device.getDataValue("location_id")
+    def locationId = device.getDataValue("locationId")
     def startDate = new Date().format('yyyy-MM-dd') + 'T00:00:00.000'
     def endDate = new Date().format('yyyy-MM-dd') + 'T23:59:59.999'
-    def uri = "https://api-gw.meetflo.com/api/v2/water/consumption?startDate=${startDate}&endDate=${endDate}&locationId=${location_id}&interval=1h"
-
-    if (!location_id || location_id == "") {
-        log.error "No location id: Consumption info request failed."
-    } else {
-        def response = make_authenticated_get(uri, "Get Consumption")
-        def data = response.data
-        sendEvent(name: "totalGallonsToday", value: round(data?.aggregations?.sumTotalGallonsConsumed))
-    }
+    def uri = "https://api-gw.meetflo.com/api/v2/water/consumption?startDate=${startDate}&endDate=${endDate}&locationId=${locationId}&interval=1h"
+    def response = parent.make_authenticated_get(uri, "Get Consumption")
+    def data = response.data
+    sendEvent(name: "totalGallonsToday", value: round(data?.aggregations?.sumTotalGallonsConsumed))
 }
 
 def getHealthTestInfo() {
     def lastHealthTestId = device.getDataValue("lastHubitatHealthtestId")
-    def deviceId = device.getDataValue("device_id")
+    def deviceId = device.deviceNetworkId
     def uri = "https://api-gw.meetflo.com/api/v2/devices/${deviceId}/healthTest/${lastHealthTestId}"
     if(lastHealthTestId && lastHealthTestId != "") {
-        def response = make_authenticated_get(uri, "Get Last Hubitat HealthTest Info")
+        def response = parent.make_authenticated_get(uri, "Get Last Hubitat HealthTest Info")
         sendEvent(name: "lastHubitatHealthtestStatus", value: response?.data?.status)
         if (!response?.data?.status) {
             device.removeDataValue("lastHubitatHealthtestId")
@@ -315,156 +264,29 @@ def getHealthTestInfo() {
     }
 }
 
-def make_authenticated_get(uri, request_type, success_status = [200, 202]) {
-    def token = device.getDataValue("token")
-    if (!token || token == "") login();
-    def response = [:];
-    int max_tries = 2;
-    int tries = 0;
-    while (!response?.status && tries < max_tries) {
-        def headers = [:]
-        headers.put("Content-Type", "application/json")
-        headers.put("Authorization", device.getDataValue("token"))
-
-        try {
-            httpGet([headers: headers, uri: uri]) { resp -> def msg = ""
-                if (logEnable) log.debug("${request_type} Received Response Code: ${resp?.status}")
-                if (resp?.status in success_status) {
-                    response = resp;
-                }
-                else {
-                    log.error "${request_type} Failed (${response.status}): ${response.data}"
-                    login()
-                }
-              }
-        }
-        catch (Exception e) {
-            log.error "${request_type} Exception: ${e}"
-            if (e.getMessage().contains("Forbidden") || e.getMessage().contains("Unauthorized")) {
-                log.debug "Forbidden/Unauthorized Exception... Refreshing token..."
-                login()
-            }
-        }
-        tries++
-
-    }
-    return response
-}
-
 def manualHealthTest() {
-    def device_id = device.getDataValue("device_id")
-    def uri = "https://api-gw.meetflo.com/api/v2/devices/${device_id}/healthTest/run"
-    def response = make_authenticated_post(uri, "", "Manual Health Test")
+    def device_id = device.deviceNetworkId
+    def uri = "https://api-gw.meetflo.com/api/v2/devices/${deviceId}/healthTest/run"
+    def response = parent.make_authenticated_post(uri, "", "Manual Health Test")
     def roundId = response?.data?.roundId
     def created = response?.data?.created
     def status = response?.data?.status
     device.updateDataValue("lastHubitatHealthtest", created)
     device.updateDataValue("lastHubitatHealthtestId", roundId)
     sendEvent(name: "lastHubitatHealthtestStatus", value: status)
-
 }
-
-def make_authenticated_post(uri, body, request_type, success_status = [200, 202]) {
-    def token = device.getDataValue("token")
-    if (!token || token == "") login();
-    def response = [:];
-    int max_tries = 2;
-    int tries = 0;
-    while (!response?.status && tries < max_tries) {
-        def headers = [:]
-        headers.put("Content-Type", "application/json")
-        headers.put("Authorization", device.getDataValue("token"))
-
-        try {
-            httpPostJson([headers: headers, uri: uri, body: body]) { resp -> def msg = ""
-                if (logEnable) log.debug("${request_type} Received Response Code: ${resp?.status}")
-                if (resp?.status in success_status) {
-                    response = resp;
-                }
-                else {
-                    log.debug "${request_type} Failed (${resp.status}): ${resp.data}"
-                }
-            }
-        }
-        catch (Exception e) {
-            log.error "${request_type} Exception: ${e}"
-            if (e.getMessage().contains("Forbidden") || e.getMessage().contains("Unauthorized")) {
-                log.debug "Forbidden/Unauthorized Exception... Refreshing token..."
-                login()
-            }
-        }
-        tries++
-
-    }
-    return response
-}
-
 
 def configure() {
-    def token = device.getDataValue("token")
-    if (password && password != "") {
-        device.updateDataValue("encryptedPassword", encrypt(password))
-        device.removeSetting("password")
-        if (!mac_address || mac_address == "" || !device.getDataValue("device_id") || !device.getDataValue("device_id") == "") {
-            state.configured = false
-        }
-        login()
-    } else if (!token || token == "") {
-        log.error "Unable to configure -- invalid login"
-        return
-    }
     getUserInfo()
-    if (isConfigurationValid()) {
-        sendEvent(name:"numberOfButtons", value: 3)
-        schedulePolling()
-        state.configured = true
-    }
+    sendEvent(name:"numberOfButtons", value: 3)
+    schedulePolling()
+    state.configured = true
 }
 
 def isNotBlank(obj) {
     return obj && obj != ""
 }
 
-def isConfigurationValid() {
-    def token = device.getDataValue("token")
-    def device_id = device.getDataValue("device_id")
-    def location_id = device.getDataValue("location_id")
-    def pw = device.getDataValue("encryptedPassword")
-    def user = device.getDataValue("user_id")
-
-    return isNotBlank(token) && isNotBlank(device_id) &&
-        isNotBlank(location_id) && isNotBlank(pw) && isNotBlank(user)
-}
-
 def login() {
-    def uri = "https://api.meetflo.com/api/v1/users/auth"
-    def pw = decrypt(device.getDataValue("encryptedPassword"))
-    if (!pw || pw == "") {
-        log.error("Login Failed: No password")
-    } else {
-        def body = [username:username, password:pw]
-        def headers = [:]
-        headers.put("Content-Type", "application/json")
-
-        try {
-            httpPostJson([headers: headers, uri: uri, body: body]) { response -> def msg = response?.status
-                if (logEnable) log.debug("Login received response code ${response?.status}")
-                    if (response?.status == 200) {
-                        msg = "Success"
-                        device.updateDataValue("token",response.data.token)
-                        device.updateDataValue("user_id", response.data.tokenPayload.user.user_id)
-                        if (!state.configured) { getUserInfo() }
-                    }
-                    else {
-                        log.error "Login Failed: (${response.status}) ${response.data}"
-                        state.configured = false
-                    }
-              }
-        }
-        catch (Exception e) {
-            log.error "Login exception: ${e}"
-            log.error "Login Failed: Please confirm your Flo Credentials"
-            state.configured = false
-        }
-    }
+  parent.authenticate()
 }
