@@ -23,7 +23,8 @@ import groovy.transform.Field
 ]
 
 def mainPage() {
-  if (username && password) {
+  log.debug getAllChildDevices()[0]?.id
+  if (!state.authenticated) {
     authenticate()
     return deviceInstaller()
   } else {
@@ -32,12 +33,18 @@ def mainPage() {
 }
 
 def loginPage() {
-  dynamicPage(name: "mainPage", title: "Manage Your Moen Flo Devices", nextPage: "deviceInstaller", install: true, uninstall: true) {
-    section("Credentials") {
-      input(name: "username", type: "string", title:"User Name", description: "Enter Moen Flo User Name", required: true, displayDuringSetup: true)
-      input(name: "password", type: "password", title:"Password", description: "Enter Moen Flo Password (to set or change it)", displayDuringSetup: true)
+    if (state.authenticated) {
+        return deviceInstaller()
     }
-  }
+    dynamicPage(name: "mainPage", title: "Manage Your Moen Flo Devices", install: true, uninstall: true) {
+        section("Credentials") {
+            preferences {
+              input(name: "username", type: "string", title:"User Name", description: "User Name", required: true, displayDuringSetup: true)
+              input(name: "password", type: "password", title:"Password", description: "Password", displayDuringSetup: true)
+              input(name: "btnLogin", type: "button", title: "Login")
+            }
+        }
+    }
 }
 
 def installed() {
@@ -52,8 +59,6 @@ def updated() {
 
 def initialize() {
   log.debug "initialize"
-  log.debug "username: " + username
-
   authenticate()
   if (state.token) {
     log.debug("login succeeded")
@@ -61,6 +66,16 @@ def initialize() {
   }
   unschedule()
   //runEvery5Minutes(checkDevices)
+}
+
+def logout() {
+    state.token = null
+    state.authenticated = false
+    state.devicesCache = null
+    state.locationsCache = null
+    state.userData = null
+    log.debug "logout()"
+    loginPage()
 }
 
 def uninstalled() {
@@ -72,29 +87,43 @@ def checkDevices() {
 }
 
 def deviceInstaller() {
-  discoverDevices()
-  def locations = state.userData.locations
-  def deviceOptions = [:]
-  locations.each { location ->
-      location.devices.each { dev ->
-          //TODO: sort and/or filter by types of devices
-          def value = "${location.nickname} - ${dev.nickname}"
-          def key = "${dev.id}"
-          deviceOptions["${key}"] = value
-      }
-  }
-  def numFound = deviceOptions.size()
-  state.deviceOptions = deviceOptions
-
-  dynamicPage(name: "deviceInstaller", title: "Select which device to install", nextPage: null, uninstall: true) {
-    section("Devices") {
-        input "devicesToInstall", "enum", required: true, title: "Select a device to install  (${numFound} found)", multiple: true, options: deviceOptions
-        //input(name: "btnLocationRefresh", type: "button", title: "Refresh Devices")
-        input(name: "btnInstallDevice", type: "button", title: "Install Device")
-
+    if (!state.authenticated) {
+        return loginPage()
     }
+    getUserInfo()
+    discoverDevices()
+    def locations = state.userData.locations
+    def deviceOptions = [:]
+    locations.each { location ->
+        location.devices.each { dev ->
+            //TODO: sort and/or filter by types of devices
+            def value = "${location.nickname} - ${dev.nickname}"
+            def key = "${dev.id}"
+            deviceOptions["${key}"] = value
+        }
+    }
+    def numFound = deviceOptions.size()
+    state.deviceOptions = deviceOptions
 
-  }
+    dynamicPage(name: "deviceInstaller", title: "Select which device to install", nextPage: null, uninstall: true) {
+        section("Logout") {
+            input(name: "btnLogout", type: "button", title: "Logout")
+        }
+        section("Devices") {
+            input "devicesToInstall", "enum", required: true, title: "Select a device to install  (${numFound} found)", multiple: true, options: deviceOptions
+            input(name: "btnInstallDevice", type: "button", title: "Install Device")
+        }
+        section("Installed Devices") {
+            //todo: list of devices
+            paragraph(displayListOfInstalledDevices())
+        }
+    }
+}
+
+def displayListOfInstalledDevices() {
+    return "<ul>"+getChildDevices().sort({ a, b -> a["deviceNetworkId"] <=> b["deviceNetworkId"] }).collect {
+        "<li><a href='/device/edit/$it.id'>$it.label</a></li>"
+    }.join("\n")+"</ul>"
 }
 
 void createNewSelectedDevices() {
@@ -125,14 +154,8 @@ void createNewSelectedDevices() {
       }
     }
 
-   if (childDevice) {
-     /*childDevice.updateSetting("username", [value:username, type:"string"])
-     childDevice.updateSetting("password", [value:password, type:"password"])
-     childDevice.updateSetting("mac_address", [value: device.macAddress, type:"string"])
-     childDevice.updateDataValue("device_id", device?.id)
-     childDevice.updateDataValue("location_id", device?.location?.id)*/
-   } else {
-    log.debug("Failed to create device ")
+   if (!childDevice) {
+       log.debug("Failed to setup device ${deviceId}")
    }
 
    }
@@ -141,12 +164,12 @@ void createNewSelectedDevices() {
 
 
 def authenticate() {
+    log.debug("authenticate()")
     def uri = "https://api.meetflo.com/api/v1/users/auth"
-    def pw = password
-    if (!pw || pw == "") {
+    if (!password) {
         log.error("Login Failed: No password")
     } else {
-        def body = [username:username, password:pw]
+        def body = [username:username, password:password]
         def headers = [:]
         headers.put("Content-Type", "application/json")
 
@@ -157,17 +180,18 @@ def authenticate() {
                         msg = "Success"
                         state.token = response.data.token
                         state.user_id = response.data.tokenPayload.user.user_id
+                        state.authenticated = true
                     }
                     else {
                         log.error "Login Failed: (${response.status}) ${response.data}"
-                        state.configured = false
+                        state.authenticated = false
                     }
               }
         }
         catch (Exception e) {
             log.error "Login exception: ${e}"
             log.error "Login Failed: Please confirm your Flo Credentials"
-            state.configured = false
+            state.authenticated = false
         }
     }
 }
@@ -297,8 +321,12 @@ def make_authenticated_post(uri, body, request_type, success_status = [200, 202]
 
 void appButtonHandler(btn) {
    switch(btn) {
-      case "btndlfkjasdkf":
-         // Just want to resubmit page, so nothing
+      case "btnLogout":
+         logout()
+         break
+      case "btnLogin":
+         authenticate()
+         deviceInstaller()
          break
       case "btnLocationRefresh":
          discoverDevices()
