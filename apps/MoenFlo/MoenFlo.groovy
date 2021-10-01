@@ -38,7 +38,7 @@ def loginPage() {
     }
     dynamicPage(name: "mainPage", title: "Manage Your Moen Flo Devices", install: true, uninstall: true) {
         section("Credentials") {
-            preferences {
+            preferences {        
               input(name: "username", type: "string", title:"User Name", description: "User Name", required: true, displayDuringSetup: true)
               input(name: "password", type: "password", title:"Password", description: "Password", displayDuringSetup: true)
               input(name: "btnLogin", type: "button", title: "Login")
@@ -94,29 +94,39 @@ def deviceInstaller() {
     discoverDevices()
     def locations = state.userData.locations
     def deviceOptions = [:]
+    def installedDeviceIds = getIdsOfInstalledDevices();
     locations.each { location ->
         location.devices.each { dev ->
+            if (!installedDeviceIds.find {it == dev.id} ) {                
             //TODO: sort and/or filter by types of devices
-            def value = "${location.nickname} - ${dev.nickname}"
-            def key = "${dev.id}"
-            deviceOptions["${key}"] = value
+                def value = "${location.nickname} - ${dev.nickname}"
+                def key = "${dev.id}"
+                deviceOptions["${key}"] = value
+            }
         }
     }
     def numFound = deviceOptions.size()
-    state.deviceOptions = deviceOptions
+    state.deviceOptions = deviceOptions.sort { it.value }
 
-    dynamicPage(name: "deviceInstaller", title: "Select which device to install", nextPage: null, uninstall: true) {
-        section("Logout") {
-            input(name: "btnLogout", type: "button", title: "Logout")
-        }
-        section("Devices") {
-            input "devicesToInstall", "enum", required: true, title: "Select a device to install  (${numFound} found)", multiple: true, options: deviceOptions
+    dynamicPage(name: "deviceInstaller", title: "", nextPage: null, uninstall: true) {
+        section("") {
+            input "devicesToInstall", "enum", required: true, title: "Select a device to install  (${numFound} installable found)", multiple: true, options: deviceOptions
             input(name: "btnInstallDevice", type: "button", title: "Install Device")
         }
         section("Installed Devices") {
             //todo: list of devices
+            paragraph("To remove a device -- go to that device and click \"Remove Device\"")
             paragraph(displayListOfInstalledDevices())
         }
+        section("") {
+            input(name: "btnLogout", type: "button", title: "Logout")
+        }
+    }
+}
+
+def getIdsOfInstalledDevices() {
+    return getChildDevices().collect{ dev ->
+        return dev.deviceNetworkId
     }
 }
 
