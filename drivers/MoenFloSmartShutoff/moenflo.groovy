@@ -150,7 +150,7 @@ def setMode(mode) {
         body.put("revertMinutes", revert_minutes)
         body.put("revertMode", revert_mode)
     }
-    def response = parent.make_authenticated_post(uri, body, "Mode Update", [204])
+    def response = parent.makeAPIPost(uri, body, "Mode Update", [204])
     sendEvent(name: "mode", value: mode)
 }
 
@@ -159,7 +159,7 @@ def valveUpdate(target) {
     def uri = "https://api-gw.meetflo.com/api/v2/devices/${deviceId}"
     if (logEnable) log.debug "Updating valve status to ${target}"
     def body = [valve:[target: target]]
-    def response = parent.make_authenticated_post(uri, body, "Valve Update")
+    def response = parent.makeAPIPost(uri, body, "Valve Update")
     sendEvent(name: "valve", value: response?.data?.valve?.target)
 }
 
@@ -178,7 +178,7 @@ def getUserInfo() {
     def userId = parent.state.user_id
     if (logEnable) log.debug "Getting device data for: ${device.deviceNetworkId}"
     def uri = "https://api-gw.meetflo.com/api/v2/users/${userId}?expand=locations,alarmSettings"
-    def response = parent.make_authenticated_get(uri, "Get User Info")
+    def response = parent.makeAPIGet(uri, "Get User Info")
     def deviceInfo = parent.state.devicesCache[device.deviceNetworkId]
     def location = parent.state.locationsCache[deviceInfo.location.id]
     device.updateDataValue("locationId", deviceInfo?.location.id)
@@ -244,7 +244,7 @@ def getConsumption() {
     def startDate = new Date().format('yyyy-MM-dd') + 'T00:00:00.000'
     def endDate = new Date().format('yyyy-MM-dd') + 'T23:59:59.999'
     def uri = "https://api-gw.meetflo.com/api/v2/water/consumption?startDate=${startDate}&endDate=${endDate}&locationId=${locationId}&interval=1h"
-    def response = parent.make_authenticated_get(uri, "Get Consumption")
+    def response = parent.makeAPIGet(uri, "Get Consumption")
     def data = response.data
     sendEvent(name: "totalGallonsToday", value: round(data?.aggregations?.sumTotalGallonsConsumed))
 }
@@ -254,7 +254,7 @@ def getHealthTestInfo() {
     def deviceId = device.deviceNetworkId
     def uri = "https://api-gw.meetflo.com/api/v2/devices/${deviceId}/healthTest/${lastHealthTestId}"
     if(lastHealthTestId && lastHealthTestId != "") {
-        def response = parent.make_authenticated_get(uri, "Get Last Hubitat HealthTest Info")
+        def response = parent.makeAPIGet(uri, "Get Last Hubitat HealthTest Info")
         sendEvent(name: "lastHubitatHealthtestStatus", value: response?.data?.status)
         if (!response?.data?.status) {
             device.removeDataValue("lastHubitatHealthtestId")
@@ -267,7 +267,7 @@ def getHealthTestInfo() {
 def manualHealthTest() {
     def device_id = device.deviceNetworkId
     def uri = "https://api-gw.meetflo.com/api/v2/devices/${deviceId}/healthTest/run"
-    def response = parent.make_authenticated_post(uri, "", "Manual Health Test")
+    def response = parent.makeAPIPost(uri, "", "Manual Health Test")
     def roundId = response?.data?.roundId
     def created = response?.data?.created
     def status = response?.data?.status

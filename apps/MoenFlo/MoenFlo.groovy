@@ -23,7 +23,6 @@ import groovy.transform.Field
 ]
 
 def mainPage() {
-  log.debug getAllChildDevices()[0]?.id
   if (!state.authenticated) {
     authenticate()
     return deviceInstaller()
@@ -137,9 +136,6 @@ def displayListOfInstalledDevices() {
 }
 
 void createNewSelectedDevices() {
-  log.debug "starting install..."
-  log.debug settings["devicesToInstall"]
-  log.debug getChildDevices()
 
    settings["devicesToInstall"].each { deviceId ->
       def childDevice = getChildDevice(deviceId)
@@ -156,11 +152,11 @@ void createNewSelectedDevices() {
             ]
             childDevice = addChildDevice(childNamespace, devDriver, devDNI, devProps)
           } catch (Exception ex) {
-            log.error("Unable to create new device for ${device.id}: $ex")
+            log.error("Unable to create device for ${device.id}: $ex")
           }
         }
       else {
-        log.error("Unable to create new device for ${device.nickname} ${device.id}")
+        log.error("Unable to create device for ${device.nickname} ${device.id}")
       }
     }
 
@@ -175,6 +171,7 @@ void createNewSelectedDevices() {
 
 def authenticate() {
     log.debug("authenticate()")
+    log.debug "username: ${username} ${password}"
     def uri = "https://api.meetflo.com/api/v1/users/auth"
     if (!password) {
         log.error("Login Failed: No password")
@@ -209,7 +206,7 @@ def authenticate() {
 def getUserInfo() {
   def user_id = state.user_id
   def uri = "https://api-gw.meetflo.com/api/v2/users/${user_id}?expand=locations,alarmSettings"
-  def response = make_authenticated_get(uri, "Get User Info")
+  def response = makeAPIGet(uri, "Get User Info")
   state.userData = response.data
 }
 
@@ -240,25 +237,25 @@ def discoverDevices() {
 
 def getLocationData(locationId) {
   def uri = "https://api-gw.meetflo.com/api/v2/locations/${locationId}?expand=devices"
-  def response = make_authenticated_get(uri, "Get Location Info")
+  def response = makeAPIGet(uri, "Get Location Info")
   return response.data
 }
 
 def getDeviceData(deviceId) {
   def uri = "https://api-gw.meetflo.com/api/v2/devices/${deviceId}"
-  def response = make_authenticated_get(uri, "Get Device")
+  def response = makeAPIGet(uri, "Get Device")
   return response.data
 }
 
 def getLastDeviceAlert(deviceId) {
   def uri = "https://api-gw.meetflo.com/api/v2/alerts?isInternalAlarm=false&deviceId=${deviceId}"
-  def response = make_authenticated_get(uri, "Get Alerts")
+  def response = makeAPIGet(uri, "Get Alerts")
   return response.data.items
 }
 
 
 
-def make_authenticated_get(uri, request_type, success_status = [200, 202]) {
+def makeAPIGet(uri, request_type, success_status = [200, 202]) {
     def token = state.token
     if (!token || token == "") authenticate();
     def response = [:];
@@ -283,8 +280,8 @@ def make_authenticated_get(uri, request_type, success_status = [200, 202]) {
         catch (Exception e) {
             log.error "${request_type} Exception: ${e}"
             if (e.getMessage().contains("Forbidden") || e.getMessage().contains("Unauthorized")) {
-                log.debug "Forbidden/Unauthorized Exception... Refreshing token..."
-                //authenticate()
+                log.debug "Forbidden/Unauthorized Exception..."
+                state.token = null
             }
         }
         tries++
@@ -293,7 +290,7 @@ def make_authenticated_get(uri, request_type, success_status = [200, 202]) {
     return response
 }
 
-def make_authenticated_post(uri, body, request_type, success_status = [200, 202]) {
+def makeAPIPost(uri, body, request_type, success_status = [200, 202]) {
     def token = state.token
     if (!token || token == "") authenticate();
     def response = [:];
