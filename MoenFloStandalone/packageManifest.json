@@ -12,7 +12,7 @@
             "id": "05c25baa-f341-400e-9980-8445bdca4b86",
             "name": "Moen Flo Smart Shutoff",
             "namespace": "dacmanj",
-            "location": "https://raw.githubusercontent.com/dacmanj/hubitat/main/drivers/MoenFloSmartShutoff/moenflo.groovy",
+            "location": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloStandalone/drivers/moenflo.groovy",
             "required": true,
             "tags": [
                 "Water",

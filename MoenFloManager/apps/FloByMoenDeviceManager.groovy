@@ -130,7 +130,7 @@ def authenticate() {
         log.error("Login Failed: No password")
     }
     else {
-        if (authenticationFailures > 3) {
+        if (state.authenticationFailures > 3) {
             log.error("Failed to authenticate after three tries. Giving up. Log out and back in to retry.")
         }
         
@@ -175,6 +175,7 @@ def discoverDevices() {
   def locations = []
   Map devicesCache = [:]
   Map locationsCache = [:]
+  getUserInfo()
   def userLocations = state.userData?.locations
   if(userLocations) {
     userLocations.each { location ->
@@ -292,6 +293,7 @@ void appButtonHandler(btn) {
          break
       case "btnLogin":
          authenticate()
+         discoverDevices()
          deviceInstaller()
          break
       default:

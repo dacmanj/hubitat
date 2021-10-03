@@ -150,8 +150,7 @@ void createDevice() {
         Map devProps = [
           name: (device?.nickname), label: (device?.nickname)
         ]
-        //addChildDevice("joelwetzel", "Reliable Lock Virtual Device", "Reliable-${wrappedLock.displayName}", null, [name: "Reliable-${wrappedLock.displayName}", label: "Reliable ${wrappedLock.displayName}", completedSetup: true, isComponent: true])
-        childDevice = addChildDevice(childNamespace, devDriver, devDNI, devProps)
+        addChildDevice(childNamespace, devDriver, devDNI, devProps)
       } catch (Exception ex) {
         log.error("Unable to create device for ${device.id}: $ex")
       }

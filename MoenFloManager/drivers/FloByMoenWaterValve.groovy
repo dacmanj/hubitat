@@ -4,23 +4,7 @@
     ANY KIND, either express or implied. See the License for the specific language governing permissions and
     limitations under the License.
 
-    v1.0.6   2021-09-28    Fix selection of location id to match device
-    v1.0.5   2021-09-27    Fix selection of location id to match device
-    v1.0.4   2021-09-27    Patch for multiple location support - fix selection of location id to match device
-    v1.0.3   2021-09-27    Add error to logging if device id entered is not located
-    v1.0.2   2021-09-25    Patch login sequence after configure
-    v1.0.1   2021-09-25    Update to fetch 36-character api device id whenever preferences are saved.
-    v1.0.00  2021-08-08    Hubitat Package Manager support, bump version
-    v0.0.99  2021-08-08    Update import url to point to hubitat package manager
-    v0.1.08  2021-01-24    Stop checking for last manual healthtest if request fails / id returns nothing
-    v0.1.07  2020-07-30    Changed data type of attributes to string, updated debug message for latest hubitat health test
-    v0.1.06  2020-07-13    Removed pending notification counts, causing unneeded events, add unit for tempF, round metrics for display
-    v0.1.05  2020-07-13    Updated preferences save to separate out password updates
-    v0.1.04  2020-07-13    Added last event and last health test to polling
-    v0.1.03  2020-07-13    Update to login error logging/handling
-    v0.1.02  2020-07-12    Default to First Device
-    v0.1.01  2020-07-12    Add Debug Logging
-    v0.1.00  2020-07-12    Initial Release
+    v2.0.0   2021-10-03    Forked standalone driver moved API and configuration to App
 
  */
 
