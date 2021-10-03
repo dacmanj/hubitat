@@ -2,7 +2,7 @@ definition(
     name: "Moen Flo",
     namespace: "dacmanj",
     author: "David Manuel",
-    description: "Device creator for Moen Flo Driver",
+    description: "Moen Flo Device Manager",
     category: "General",
     iconUrl: "",
     iconX2Url: "",
@@ -16,11 +16,14 @@ preferences {
 }
 
 import groovy.transform.Field
-@Field static final String childNamespace = "dacmanj" // namespace of child device drivers
-@Field static final Map driverMap = [
+@Field final String childNamespace = "dacmanj" // namespace of child device drivers
+@Field final Map driverMap = [
    "flo_device_v2":       "Moen Flo Shutoff Valve",
    "DEFAULT":             "Moen Flo Shutoff Valve"
 ]
+
+@Field final String baseUrl = 'https://api-gw.meetflo.com/api/v2'
+@Field final String authUrl = 'https://api.meetflo.com/api/v1/users/auth'
 
 def mainPage() {
   if (!state.authenticated) {
@@ -36,7 +39,7 @@ def loginPage() {
         return deviceInstaller()
     }
     dynamicPage(name: "mainPage", title: "Manage Your Moen Flo Devices", install: true, uninstall: true) {
-        section("Credentials") {
+        section("<b>Credentials<b>") {
             preferences {        
               input(name: "username", type: "string", title:"User Name", description: "User Name", required: true, displayDuringSetup: true)
               input(name: "password", type: "password", title:"Password", description: "Password", displayDuringSetup: true)
@@ -62,6 +65,7 @@ def initialize() {
   if (state.token) {
     log.debug("login succeeded")
     getUserInfo()
+    discoverDevices()
   }
   unschedule()
   //runEvery5Minutes(checkDevices)
@@ -70,6 +74,7 @@ def initialize() {
 def logout() {
     state.token = null
     state.authenticated = false
+    state.authenticationFailures = 0
     state.devicesCache = null
     state.locationsCache = null
     state.userData = null
@@ -89,38 +94,20 @@ def deviceInstaller() {
     if (!state.authenticated) {
         return loginPage()
     }
-    getUserInfo()
-    discoverDevices()
-    def locations = state.userData.locations
-    def deviceOptions = [:]
-    def installedDeviceIds = getIdsOfInstalledDevices();
-    locations.each { location ->
-        location.devices.each { dev ->
-            if (!installedDeviceIds.find {it == dev.id} ) {                
-            //TODO: sort and/or filter by types of devices
-                def value = "${location.nickname} - ${dev.nickname}"
-                def key = "${dev.id}"
-                deviceOptions["${key}"] = value
-            }
-        }
-    }
-    def numFound = deviceOptions.size()
-    state.deviceOptions = deviceOptions.sort { it.value }
 
     dynamicPage(name: "deviceInstaller", title: "", nextPage: null, uninstall: true) {
-        section("") {
-            input "devicesToInstall", "enum", required: true, title: "Select a device to install  (${numFound} installable found)", multiple: true, options: deviceOptions
-            input(name: "btnInstallDevice", type: "button", title: "Install Device")
+        section("<b>Installed Devices</b>") {
+            app(name: "anyOpenApp", appName: "Moen Flo Instance", namespace: "dacmanj", title: "<b>Add a new device</b>", multiple: true)
         }
-        section("Installed Devices") {
-            //todo: list of devices
-            paragraph("To remove a device -- go to that device and click \"Remove Device\"")
-            paragraph(displayListOfInstalledDevices())
-        }
-        section("") {
+        section("<b>Settings</b>") {
+            input(name: 'logEnable', type: "bool", title: "Enable Debug Logging?", required: false, defaultValue: false, submitOnChange: true)
             input(name: "btnLogout", type: "button", title: "Logout")
         }
     }
+}
+
+def getDriverMap() {
+    return driverMap;
 }
 
 def getIdsOfInstalledDevices() {
@@ -129,53 +116,18 @@ def getIdsOfInstalledDevices() {
     }
 }
 
-def displayListOfInstalledDevices() {
-    return "<ul>"+getChildDevices().sort({ a, b -> a["deviceNetworkId"] <=> b["deviceNetworkId"] }).collect {
-        "<li><a href='/device/edit/$it.id'>$it.label</a></li>"
-    }.join("\n")+"</ul>"
-}
-
-void createNewSelectedDevices() {
-
-   settings["devicesToInstall"].each { deviceId ->
-      def childDevice = getChildDevice(deviceId)
-      device = state.devicesCache[deviceId]
-      if (!childDevice) {
-        if (device) {
-          try {
-            log.debug "Creating new device for ${device.deviceType} ${device.nickname}"
-            String devDriver = driverMap[device.deviceType] ?: driverMap["DEFAULT"]
-            log.debug "Driver: ${devDriver}"
-            String devDNI = "${device?.id}"
-            Map devProps = [
-              name: (device?.nickname), label: (device?.nickname)
-            ]
-            childDevice = addChildDevice(childNamespace, devDriver, devDNI, devProps)
-          } catch (Exception ex) {
-            log.error("Unable to create device for ${device.id}: $ex")
-          }
-        }
-      else {
-        log.error("Unable to create device for ${device.nickname} ${device.id}")
-      }
-    }
-
-   if (!childDevice) {
-       log.debug("Failed to setup device ${deviceId}")
-   }
-
-   }
-   app.removeSetting("devicesToInstall")
-}
-
-
 def authenticate() {
-    log.debug("authenticate()")
-    log.debug "username: ${username} ${password}"
-    def uri = "https://api.meetflo.com/api/v1/users/auth"
+    if (logEnable) log.debug("authenticate()")
+    if (logEnable) log.debug("failure count: ${state.authenticationFailures}")
+    def uri = authUrl
     if (!password) {
         log.error("Login Failed: No password")
-    } else {
+    }
+    else {
+        if (authenticationFailures > 3) {
+            log.error("Failed to authenticate after three tries. Giving up. Log out and back in to retry.")
+        }
+        
         def body = [username:username, password:password]
         def headers = [:]
         headers.put("Content-Type", "application/json")
@@ -186,12 +138,14 @@ def authenticate() {
                     if (response?.status == 200) {
                         msg = "Success"
                         state.token = response.data.token
-                        state.user_id = response.data.tokenPayload.user.user_id
+                        state.userId = response.data.tokenPayload.user.user_id
                         state.authenticated = true
+                        state.authenticationFailures = 0
                     }
                     else {
                         log.error "Login Failed: (${response.status}) ${response.data}"
                         state.authenticated = false
+                        state.authentcationFailures += 1
                     }
               }
         }
@@ -199,13 +153,14 @@ def authenticate() {
             log.error "Login exception: ${e}"
             log.error "Login Failed: Please confirm your Flo Credentials"
             state.authenticated = false
+            state.authentcationFailures += 1
         }
     }
 }
 
 def getUserInfo() {
-  def user_id = state.user_id
-  def uri = "https://api-gw.meetflo.com/api/v2/users/${user_id}?expand=locations,alarmSettings"
+  def userId = state.userId
+  def uri = "${baseUrl}/users/${userId}?expand=locations,alarmSettings"
   def response = makeAPIGet(uri, "Get User Info")
   state.userData = response.data
 }
@@ -214,7 +169,7 @@ def discoverDevices() {
   def locations = []
   Map devicesCache = [:]
   Map locationsCache = [:]
-  def userLocations = state.userData.locations
+  def userLocations = state.userData?.locations
   if(userLocations) {
     userLocations.each { location ->
       def locationDetail = getLocationData(location.id)
@@ -228,34 +183,27 @@ def discoverDevices() {
       }
     }
   } else {
-    log.debug "No locations in user data"
+    if (logEnable) log.debug "No locations in user data"
   }
-  state.userData.locations = locations
+  state.userData?.locations = locations
   state.devicesCache = devicesCache
   state.locationsCache = locationsCache
 }
 
 def getLocationData(locationId) {
-  def uri = "https://api-gw.meetflo.com/api/v2/locations/${locationId}?expand=devices"
+  def uri = "${baseUrl}/locations/${locationId}?expand=devices"
   def response = makeAPIGet(uri, "Get Location Info")
   return response.data
 }
 
 def getDeviceData(deviceId) {
-  def uri = "https://api-gw.meetflo.com/api/v2/devices/${deviceId}"
+  def uri = "${baseUrl}/devices/${deviceId}"
   def response = makeAPIGet(uri, "Get Device")
   return response.data
 }
 
-def getLastDeviceAlert(deviceId) {
-  def uri = "https://api-gw.meetflo.com/api/v2/alerts?isInternalAlarm=false&deviceId=${deviceId}"
-  def response = makeAPIGet(uri, "Get Alerts")
-  return response.data.items
-}
-
-
-
 def makeAPIGet(uri, request_type, success_status = [200, 202]) {
+    if (logEnable) log.debug "makeAPIGet: ${request_type} ${uri}"
     def token = state.token
     if (!token || token == "") authenticate();
     def response = [:];
@@ -279,10 +227,14 @@ def makeAPIGet(uri, request_type, success_status = [200, 202]) {
         }
         catch (Exception e) {
             log.error "${request_type} Exception: ${e}"
-            if (e.getMessage().contains("Forbidden") || e.getMessage().contains("Unauthorized")) {
+            if (e.getMessage()?.contains("Forbidden") || e.getMessage()?.contains("Unauthorized")) {
                 log.debug "Forbidden/Unauthorized Exception..."
-                state.token = null
+            } else {
+                log.error "${request_type} Failed ${e}"
             }
+            state.token = null
+            authenticate()
+
         }
         tries++
 
@@ -291,6 +243,7 @@ def makeAPIGet(uri, request_type, success_status = [200, 202]) {
 }
 
 def makeAPIPost(uri, body, request_type, success_status = [200, 202]) {
+    if (logEnable) log.debug "makeAPIGet: ${request_type} ${uri}"
     def token = state.token
     if (!token || token == "") authenticate();
     def response = [:];
@@ -316,7 +269,7 @@ def makeAPIPost(uri, body, request_type, success_status = [200, 202]) {
             log.error "${request_type} Exception: ${e}"
             if (e.getMessage().contains("Forbidden") || e.getMessage().contains("Unauthorized")) {
                 log.debug "Forbidden/Unauthorized Exception... Refreshing token..."
-                //authenticate()
+                authenticate()
             }
         }
         tries++
