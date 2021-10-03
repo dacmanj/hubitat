@@ -112,6 +112,9 @@ def getDeviceInfo() {
         def uri = "https://api-gw.meetflo.com/api/v2/devices/${device_id}"
         def response = make_authenticated_get(uri, "Get Device")
         def data = response.data
+        device.updateDataValue("deviceNickname", data?.nickname)
+        device.updateDataValue("deviceType", data?.deviceType)
+        device.updateDataValue("deviceModel", data?.deviceModel)
         sendEvent(name: "temperature", value: round(data?.telemetry?.current?.tempF, 0), unit: "F")
         sendEvent(name: "humidity", value: round(data?.telemetry?.current?.humidity, 0), unit: "%")
         sendEvent(name: "battery", value: round(data?.battery?.level, 0), unit: "%")

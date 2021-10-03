@@ -64,6 +64,13 @@ def installed() {
 def updated() {
   log.debug "updated"
   initialize()
+	unsubscribe()
+  unschedule()
+  if (logEnable) runIn(1800,logsOff)
+}
+
+def logsOff() {
+  logEnable = false
 }
 
 def initialize() {
@@ -74,24 +81,25 @@ def initialize() {
     discoverDevices()
   }
   unschedule()
-  log.info "There are ${childApps.size()} child apps"
-  childApps.each { child ->
-    log.info "Child app: ${child.label}"
-    log.info "Child app: ${child.id}"
-    log.info "Child app: ${child}"
-    
+  if (logEnable) {
+    log.info "There are ${childApps.size()} child apps"
+    childApps.each { child ->
+      log.info "Child app: ${child.label}"
+      log.info "Child app: ${child.id}"
+      log.info "Child app: ${child}"  
+    }
   }
 }
 
 def logout() {
-    state.token = null
-    state.authenticated = false
-    state.authenticationFailures = 0
-    state.devicesCache = null
-    state.locationsCache = null
-    state.userData = null
-    log.debug "logout()"
-    loginPage()
+  state.token = null
+  state.authenticated = false
+  state.authenticationFailures = 0
+  state.devicesCache = null
+  state.locationsCache = null
+  state.userData = null
+  log.debug "logout()"
+  loginPage()
 }
 
 def uninstalled() {
@@ -103,19 +111,24 @@ def uninstalled() {
 }
 
 def deviceInstaller() {
-    if (!state.authenticated) {
-        return loginPage()
+  getAllChildApps().each { app ->
+    app.getAllChildDevices().each { dev ->
+      log.debug(dev.id)
     }
+  }
+  if (!state.authenticated) {
+    return loginPage()
+  }
 
-    dynamicPage(name: "deviceInstaller", title: "", install: true, uninstall: true) {
-        section("<b>Installed Devices</b>") {
-            app(name: "deviceApps", appName: "FLO by Moen Device Instance", namespace: "dacmanj", title: "<b>Add a new device</b>", multiple: true)
-        }
-        section("<b>Settings</b>") {
-            input(name: 'logEnable', type: "bool", title: "Enable Debug Logging?", required: false, defaultValue: false, submitOnChange: true)
-            input(name: "btnLogout", type: "button", title: "Logout")
-        }
+  dynamicPage(name: "deviceInstaller", title: "", install: true, uninstall: true) {
+    section("<b>Installed Devices</b>") {
+      app(name: "deviceApps", appName: "FLO by Moen Device Instance", namespace: "dacmanj", title: "<b>Add Device</b>", multiple: true)
     }
+    section("<b>Settings</b>") {
+      input(name: 'logEnable', type: "bool", title: "Enable App (and API) Debug Logging?", required: false, defaultValue: false, submitOnChange: true)
+      input(name: "btnLogout", type: "button", title: "Logout")
+    }
+  }
 }
 
 def getDriverMap() {

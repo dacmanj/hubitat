@@ -20,44 +20,74 @@ import groovy.transform.Field
 @Field final String childNamespace = "dacmanj" // namespace of child device drivers
 @Field final String baseUrl = 'https://api-gw.meetflo.com/api/v2'
 
-
 preferences {
-	page(name: "mainPage", title: "", install: true, uninstall: true) {
-		section(getFormat("title", "Device")) {
-            input(
-                name: "deviceId", 
-                type: "enum", 
-                required: true, 
-                title: "Device", 
-                multiple: false, 
-                options: deviceOptions()
-            )
-            input(
-                name: "revertMode", 
-                type: "enum", 
-                title: "Revert Mode (after Sleep)", 
-                options: ["home","away","sleep"], 
-                defaultValue: "home"
-            )
-            input(
-                name: "pollingInterval", 
-                type: "enum", 
-                title: "Polling Interval (in Minutes)",
-                options: 5..59,
-                defaultValue: 5
-            )
-            input(
-                name: "revertMinutes",
-                type: "number",
-                title: "Revert Time in Minutes (after Sleep)", 
-                defaultValue: 120)
-            input (
-                name: "logEnable", 
-                type: "bool",
-                title: "Enable debug logging",
-                defaultValue: true
-            )
+  page(name: "mainPage")
+  page(name: "settingsPage")
+}
+
+
+def deviceSelector() {
+    def label = getApp().label ? getApp().label : "Device Setup"
+  	dynamicPage(name: "mainPage", title: "", nextPage: 'settingsPage', install: false, uninstall: true) {
+		  section(getFormat("title", label)) {
+        input(
+          name: "deviceId", 
+          type: "enum", 
+          required: true, 
+          title: "Device", 
+          multiple: false, 
+          options: deviceOptions()
+        )
+      }
+    }
+}
+
+def mainPage() {
+  if (!deviceId) {
+    deviceSelector()
+  } else {
+    settingsPage()
+  }
+}
+
+def settingsPage() {
+  initialize()
+  def label = getApp().label ? getApp().label : "Device Setup"
+	dynamicPage(name: "settingsPage", title: "", install: true, uninstall: true) {
+		section(getFormat("title", label)) {
+      paragraph("<b>Device Information</b><ul><li><b>Device Type:</b> ${state.deviceInfo?.deviceType}</li><li><b>Device Model: </b>${state.deviceInfo?.deviceModel}</li></ul>")
+      input(
+        name: "revertMode", 
+        type: "enum", 
+        title: "Revert Mode (after Sleep)", 
+        options: ["home","away","sleep"], 
+        defaultValue: "home"
+      )
+      input(
+        name: "pollingInterval", 
+        type: "enum", 
+        title: "Polling Interval (in Minutes)",
+        options: 5..59,
+        defaultValue: 5
+      )
+      input(
+        name: "revertMinutes",
+        type: "number",
+        title: "Revert Time in Minutes (after Sleep)", 
+        defaultValue: 120)
+      input (
+        name: "logEnable", 
+        type: "bool",
+        title: "Enable Device Debug Logging",
+        defaultValue: true
+      )
 		}
+    if (getChildDevices().size() > 0) {
+      section("Linked Device") {
+        paragraph(displayListOfInstalledDevices())
+        paragraph("To remove the device, click Remove below.")
+      }
+    }
 	}
 }
 
@@ -80,15 +110,15 @@ def uninstalled() {
 
 def updated() {
 	log.info "Updated with settings: ${settings}"
-  def device = getChildDevice("${deviceId}")
-  device.updated()
-  if (deviceId && !device) {
+  initialize()
+  def childDevice = getChildDevice("${deviceId}-${getApp().id}")
+  if (childDevice) {
+    childDevice.updated()
+  } else {
     createDevice()
   }
   if (logEnable) runIn(1800,logsOff)
-
 	unsubscribe()
-	initialize()
 }
 
 def logsOff() {
@@ -97,31 +127,22 @@ def logsOff() {
 
 def initialize() {
   log.info "initialize()"
-	def device = parent?.state?.devicesCache[deviceId]
-  def locationName = parent?.state?.locationsCache[device?.location.id].nickname
-  log.debug "${locationName} - ${device?.nickname}"
-	app.updateLabel("${locationName} - ${device?.nickname}")
-	/*
-	if (autoRefreshOption == "30") {
-		runEvery30Minutes(refreshWrappedLock)
-	}
-	else if (autoRefreshOption == "10") {
-		runEvery10Minutes(refreshWrappedLock)
-	}
-	else if (autoRefreshOption == "5") {
-		runEvery5Minutes(refreshWrappedLock)
-	}
-	else if (autoRefreshOption == "1") {
-		runEvery1Minute(refreshWrappedLock)
-	}
-	else {
-		unschedule(refreshWrappedLock)	
-	}*/
+	def deviceInfo = parent?.state?.devicesCache[deviceId]
+  def location = parent?.state?.locationsCache[deviceInfo?.location.id]
+  def locationName = location.nickname
+  log.debug "${locationName} - ${deviceInfo?.nickname}"
+	app.updateLabel("${locationName} - ${deviceInfo?.nickname}")
+  state.location = location
+  state.deviceInfo = deviceInfo
+}
+
+def displayListOfInstalledDevices() {
+    return "<ul>"+getChildDevices().collect {
+        "<li><a href='/device/edit/$it.id'>$it.label</a></li>"
+    }.join("\n")+"</ul>"
 }
 
 def deviceOptions() {
-
-  log.info "devicesOptions()"
   def locations = parent?.state?.userData?.locations
   def deviceOptions = [:]
   locations.each { location ->
@@ -135,9 +156,9 @@ def deviceOptions() {
   return deviceOptions
 }
 
-void createDevice() {
+def createDevice() {
   log.info "createDevice()"
-  def childDevice = getChildDevice(deviceId)
+  def childDevice = getChildDevice("${deviceId}-${appId}")
   def driverMap = parent.getDriverMap()
   device = parent?.state?.devicesCache[deviceId]
   if (!childDevice) {
@@ -146,22 +167,26 @@ void createDevice() {
         log.debug "Creating new device for ${device.deviceType} ${device.nickname}"
         String devDriver = driverMap[device.deviceType] ?: driverMap["DEFAULT"]
         log.debug "Driver: ${devDriver}"
-        String devDNI = "${device?.id}"
+        def appId = getApp().id
+        String devDNI = "${device?.id}-${appId}"
         Map devProps = [
-          name: (device?.nickname), label: (device?.nickname)
+          name: (device?.nickname), 
+          label: (device?.nickname),
+          isComponent: true
         ]
-        addChildDevice(childNamespace, devDriver, devDNI, devProps)
+        childDevice = addChildDevice(childNamespace, devDriver, devDNI, devProps)
+        return childDevice
       } catch (Exception ex) {
         log.error("Unable to create device for ${device.id}: $ex")
       }
     }
     else {
-      log.error("Unable to create device for ${device.nickname} ${device.id}")
+      log.error("Unable to find device info. Device creation failed.")
     }
   }
 
   if (!childDevice) {
-    log.debug("Failed to setup device ${deviceId}")
+    if (logEnable) log.debug("Failed to setup device ${deviceId}")
   }
 
 }
