@@ -1,8 +1,15 @@
+/*
+    FLO by Moen Device Manager for Hubitat by David Manuel is licensed under CC BY 4.0 see https://creativecommons.org/licenses/by/4.0
+    Software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+    ANY KIND, either express or implied. See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 definition(
-    name: "Moen Flo",
+    name: "FLO by Moen Device Manager",
     namespace: "dacmanj",
     author: "David Manuel",
-    description: "Moen Flo Device Manager",
+    description: "FLO by Moen Device Manager",
     category: "General",
     iconUrl: "",
     iconX2Url: "",
@@ -18,8 +25,8 @@ preferences {
 import groovy.transform.Field
 @Field final String childNamespace = "dacmanj" // namespace of child device drivers
 @Field final Map driverMap = [
-   "flo_device_v2":       "Moen Flo Shutoff Valve",
-   "DEFAULT":             "Moen Flo Shutoff Valve"
+   "flo_device_v2":       "FLO by Moen Water Valve",
+   "DEFAULT":             "FLO by Moen Water Valve"
 ]
 
 @Field final String baseUrl = 'https://api-gw.meetflo.com/api/v2'
@@ -63,12 +70,17 @@ def initialize() {
   log.debug "initialize"
   authenticate()
   if (state.token) {
-    log.debug("login succeeded")
     getUserInfo()
     discoverDevices()
   }
   unschedule()
-  //runEvery5Minutes(checkDevices)
+  log.info "There are ${childApps.size()} child apps"
+  childApps.each { child ->
+    log.info "Child app: ${child.label}"
+    log.info "Child app: ${child.id}"
+    log.info "Child app: ${child}"
+    
+  }
 }
 
 def logout() {
@@ -84,10 +96,10 @@ def logout() {
 
 def uninstalled() {
   log.debug "uninstalled"
-}
-
-def checkDevices() {
-  log.debug "checkDevices"
+  childApps.each { child ->
+    log.info "Deleting child app: ${child.label}"
+    deleteChildApp(child.id)
+  }
 }
 
 def deviceInstaller() {
@@ -95,9 +107,9 @@ def deviceInstaller() {
         return loginPage()
     }
 
-    dynamicPage(name: "deviceInstaller", title: "", nextPage: null, uninstall: true) {
+    dynamicPage(name: "deviceInstaller", title: "", install: true, uninstall: true) {
         section("<b>Installed Devices</b>") {
-            app(name: "anyOpenApp", appName: "Moen Flo Instance", namespace: "dacmanj", title: "<b>Add a new device</b>", multiple: true)
+            app(name: "deviceApps", appName: "FLO by Moen Device Instance", namespace: "dacmanj", title: "<b>Add a new device</b>", multiple: true)
         }
         section("<b>Settings</b>") {
             input(name: 'logEnable', type: "bool", title: "Enable Debug Logging?", required: false, defaultValue: false, submitOnChange: true)
@@ -108,12 +120,6 @@ def deviceInstaller() {
 
 def getDriverMap() {
     return driverMap;
-}
-
-def getIdsOfInstalledDevices() {
-    return getChildDevices().collect{ dev ->
-        return dev.deviceNetworkId
-    }
 }
 
 def authenticate() {
@@ -287,12 +293,6 @@ void appButtonHandler(btn) {
       case "btnLogin":
          authenticate()
          deviceInstaller()
-         break
-      case "btnLocationRefresh":
-         discoverDevices()
-         break
-      case "btnInstallDevice":
-         createNewSelectedDevices()
          break
       default:
          log.warn "Unhandled app button press: $btn"

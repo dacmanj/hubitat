@@ -1,5 +1,5 @@
 /**
-    Moen Flo Smart Shutoff for Hubitat by David Manuel is licensed under CC BY 4.0 see https://creativecommons.org/licenses/by/4.0
+    FLO by Moen for Hubitat by David Manuel is licensed under CC BY 4.0 see https://creativecommons.org/licenses/by/4.0
     Software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
     ANY KIND, either express or implied. See the License for the specific language governing permissions and
     limitations under the License.
@@ -25,7 +25,7 @@
  */
 
 metadata {
-    definition (name: "Moen Flo Shutoff Valve", namespace: "dacmanj", author: "David Manuel", importUrl: "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloSmartShutoff/moenflo.groovy") {
+    definition (name: "FLO by Moen Water Valve", namespace: "dacmanj", author: "David Manuel", importUrl: "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloSmartShutoff/moenflo.groovy") {
         capability "Valve"
         capability "PushableButton"
         capability "LocationMode"

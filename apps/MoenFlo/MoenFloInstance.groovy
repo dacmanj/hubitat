@@ -1,11 +1,13 @@
-/**
- *  Moen Flo Instance v0.01
- */
-
+/*
+    FLO by Moen Device Manager for Hubitat by David Manuel is licensed under CC BY 4.0 see https://creativecommons.org/licenses/by/4.0
+    Software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+    ANY KIND, either express or implied. See the License for the specific language governing permissions and
+    limitations under the License.
+*/
 
 definition(
-	parent: "dacmanj:Moen Flo",
-    name: "Moen Flo Instance",
+	parent: "dacmanj:FLO by Moen Device Manager",
+    name: "FLO by Moen Device Instance",
     namespace: "dacmanj",
     author: "David Manuel",
     description: "Child app for managing Moen Flo devices created",
@@ -21,12 +23,12 @@ import groovy.transform.Field
 
 preferences {
 	page(name: "mainPage", title: "", install: true, uninstall: true) {
-		section(getFormat("title", "Flo Device")) {
+		section(getFormat("title", "Device")) {
             input(
                 name: "deviceId", 
                 type: "enum", 
                 required: true, 
-                title: "Moen Flo Device", 
+                title: "Device", 
                 multiple: false, 
                 options: deviceOptions()
             )
@@ -168,7 +170,7 @@ void createDevice() {
 
 def getFormat(type, myText=""){
 	if(type == "header-green") return "<div style='color:#ffffff;font-weight: bold;background-color:#81BC00;border: 1px solid;box-shadow: 2px 3px #A9A9A9'>${myText}</div>"
-    if(type == "line") return "\n<hr style='background-color:#1A77C9; height: 1px; border: 0;'></hr>"
+  if(type == "line") return "\n<hr style='background-color:#1A77C9; height: 1px; border: 0;'></hr>"
 	if(type == "title") return "<h2 style='color:#1A77C9;font-weight: bold'>${myText}</h2>"
 }
 
