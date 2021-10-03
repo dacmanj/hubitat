@@ -4,6 +4,7 @@
     ANY KIND, either express or implied. See the License for the specific language governing permissions and
     limitations under the License.
 
+    v1.0.7   2021-10-03    Update import location
     v1.0.6   2021-09-28    Fix selection of location id to match device
     v1.0.5   2021-09-27    Fix selection of location id to match device
     v1.0.4   2021-09-27    Patch for multiple location support - fix selection of location id to match device
@@ -25,7 +26,7 @@
  */
 
 metadata {
-    definition (name: "Moen Flo Smart Shutoff", namespace: "dacmanj", author: "David Manuel", importUrl: "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloSmartShutoff/moenflo.groovy") {
+    definition (name: "Moen Flo Smart Shutoff", namespace: "dacmanj", author: "David Manuel", importUrl: "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloStandalone/drivers/moenflo.groovy") {
         capability "Valve"
         capability "PushableButton"
         capability "LocationMode"
