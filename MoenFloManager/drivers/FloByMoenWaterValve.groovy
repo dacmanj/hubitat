@@ -127,7 +127,7 @@ def setMode(mode) {
 }
 
 def valveUpdate(target) {
-    def deviceId = device.deviceNetworkId
+    def deviceId = device.getDataValue("deviceId")
     def uri = "${baseUrl}/devices/${deviceId}"
     if (parent?.logEnable) log.debug "Updating valve status to ${target}"
     def body = [valve:[target: target]]
@@ -148,8 +148,8 @@ def push(btn) {
 
 
 def getDeviceInfo() {
-    if (parent?.logEnable) log.debug "Getting device data for: ${device.deviceNetworkId}"
-    def deviceId = device.deviceNetworkId
+    def deviceId = device.deviceNetworkId.substring(0,36)
+    if (parent?.logEnable) log.debug "Getting device data for: ${deviceId}"
     def deviceInfo = parent.getDeviceData(deviceId)
     def location = parent.getLocationsCache()[deviceInfo?.location?.id]
     device.updateDataValue("locationNickname", location?.nickname)
@@ -177,7 +177,7 @@ def getDeviceInfo() {
 }
 
 def getLastAlerts() {
-    def deviceId = device.deviceNetworkId
+    def deviceId = device.getDataValue("deviceId")
     def data = parent.getLastDeviceAlert(deviceId)
     if (data) {
         sendEvent(name: "lastEvent", value: data[0]?.displayTitle)
@@ -215,7 +215,7 @@ def getConsumption() {
 
 def getHealthTestInfo() {
     def lastHealthTestId = device.getDataValue("lastHubitatHealthtestId")
-    def deviceId = device.deviceNetworkId
+    def deviceId = device.getDataValue("deviceId")
     def uri = "${baseUrl}/devices/${deviceId}/healthTest/${lastHealthTestId}"
     if(lastHealthTestId && lastHealthTestId != "") {
         def response = parent.makeAPIGet(uri, "Get Last Hubitat HealthTest Info")
@@ -229,7 +229,7 @@ def getHealthTestInfo() {
 }
 
 def manualHealthTest() {
-    def device_id = device.deviceNetworkId
+    def deviceId = device.getDataValue("deviceId")
     def uri = "${baseUrl}/devices/${deviceId}/healthTest/run"
     def response = parent.makeAPIPost(uri, "", "Manual Health Test")
     def roundId = response?.data?.roundId
