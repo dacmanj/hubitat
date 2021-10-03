@@ -26,6 +26,7 @@ import groovy.transform.Field
 @Field final String childNamespace = "dacmanj" // namespace of child device drivers
 @Field final Map driverMap = [
    "flo_device_v2":       "FLO by Moen Water Valve",
+   "location":            "FLO by Moen Location",
    "DEFAULT":             "FLO by Moen Water Valve"
 ]
 
@@ -111,18 +112,16 @@ def uninstalled() {
 }
 
 def deviceInstaller() {
-  getAllChildApps().each { app ->
-    app.getAllChildDevices().each { dev ->
-      log.debug(dev.id)
-    }
-  }
   if (!state.authenticated) {
     return loginPage()
   }
 
   dynamicPage(name: "deviceInstaller", title: "", install: true, uninstall: true) {
-    section("<b>Installed Devices</b>") {
+    section("<h3>Devices</h3>") {
       app(name: "deviceApps", appName: "FLO by Moen Device Instance", namespace: "dacmanj", title: "<b>Add Device</b>", multiple: true)
+    }
+    section("<h3>Locations</h3>") {
+      app(name: "locationApps", appName: "FLO by Moen Location Instance", namespace: "dacmanj", title: "<b>Add Location</b>", multiple: true)
     }
     section("<b>Settings</b>") {
       input(name: 'logEnable', type: "bool", title: "Enable App (and API) Debug Logging?", required: false, defaultValue: false, submitOnChange: true)

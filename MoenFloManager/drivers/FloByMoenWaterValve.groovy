@@ -11,22 +11,13 @@
 metadata {
     definition (name: "FLO by Moen Water Valve", namespace: "dacmanj", author: "David Manuel", importUrl: "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloSmartShutoff/moenflo.groovy") {
         capability "Valve"
-        capability "PushableButton"
-        capability "LocationMode"
-        capability "Momentary"
         capability "TemperatureMeasurement"
         capability "SignalStrength"
 
-        command "home"
-        command "away"
-        command "sleepMode"
         command "reset"
         command "manualHealthTest"
         command "pollMoen"
 
-        attribute "numberOfButtons", "number"
-        attribute "pushed", "number"
-        attribute "mode", "enum", ["home","away","sleep"]
         attribute "valve", "enum", ["open", "closed"]
         attribute "temperature", "number"
         attribute "gpm", "number"
@@ -35,7 +26,6 @@ metadata {
         attribute "rssi", "number"
         attribute "ssid", "string"
         attribute "lastHubitatHealthtestStatus", "string"
-        attribute "totalGallonsToday", "number"
         attribute "lastEvent", "string"
         attribute "lastEventDetail", "string"
         attribute "lastEventDateTime", "string"
@@ -49,11 +39,6 @@ metadata {
 
 import groovy.transform.Field
 @Field final String baseUrl = 'https://api-gw.meetflo.com/api/v2'
-
-def logsOff(){
-    device.updateSetting("logEnable", false)
-    log.warn "Debug Logging Disabled..."
-}
 
 def open() {
     valveUpdate("open")
@@ -81,7 +66,7 @@ def unschedulePolling() {
 
 def schedulePolling() {
     unschedule(pollMoen)
-    if (parent?.pollingInterval != "None") {
+    if (parent?.pollingInterval) {
         schedule("0 0/${parent?.pollingInterval} * 1/1 * ? *", pollMoen)
     }
 }
@@ -89,9 +74,8 @@ def schedulePolling() {
 def pollMoen() {
     if (parent?.logEnable) log.debug("Polling Moen")
     getDeviceInfo()
-    getHealthTestInfo()
-    getConsumption()
     getLastAlerts()
+    getHealthTestInfo()
 }
 
 def close() {
@@ -110,22 +94,6 @@ def sleepMode() {
     setMode("sleep")
 }
 
-def setMode(mode) {
-    if (parent?.logEnable) log.debug "Setting Flo mode to ${mode}"
-    def locationId = device.getDataValue("locationId")
-    def uri = "${baseUrl}/locations/${locationId}/systemMode"
-    def body = [target:mode]
-    def headers = [:]
-    headers.put("Content-Type", "application/json")
-    headers.put("Authorization", device.getDataValue("token"))
-    if (mode == "sleep") {
-        body.put("revertMinutes", parent?.revertMinutes)
-        body.put("revertMode", parent?.revertMode)
-    }
-    def response = parent.makeAPIPost(uri, body, "Mode Update", [204])
-    sendEvent(name: "mode", value: mode)
-}
-
 def valveUpdate(target) {
     def deviceId = device.getDataValue("deviceId")
     def uri = "${baseUrl}/devices/${deviceId}"
@@ -133,17 +101,6 @@ def valveUpdate(target) {
     def body = [valve:[target: target]]
     def response = parent.makeAPIPost(uri, body, "Valve Update")
     sendEvent(name: "valve", value: response?.data?.valve?.target)
-}
-
-def push(btn) {
-    switch(btn) {
-       case 1: mode = "home"; break;
-       case 2: mode = "away"; break;
-       case 3: mode = "sleep"; break;
-       default: mode = "home";
-    }
-    if (parent?.logEnable) log.debug "Setting Flo mode to ${mode} via button press"
-    setMode(mode)
 }
 
 
@@ -171,9 +128,6 @@ def getDeviceInfo() {
     sendEvent(name: "valve", value: deviceInfo?.valve?.target)
     sendEvent(name: "rssi", value: deviceInfo?.connectivity?.rssi)
     sendEvent(name: "ssid", value: deviceInfo?.connectivity?.ssid)
-    def system_mode = deviceInfo?.fwProperties?.system_mode
-    def SYSTEM_MODES = [2: "home", 3: "away", 5: "sleep"]
-    sendEvent(name: "mode", value: SYSTEM_MODES[system_mode])
 }
 
 def getLastAlerts() {
@@ -201,16 +155,6 @@ def round(d, places = 2) {
     else {
         return d
     }
-}
-
-def getConsumption() {
-    def locationId = device.getDataValue("locationId")
-    def startDate = new Date().format('yyyy-MM-dd') + 'T00:00:00.000'
-    def endDate = new Date().format('yyyy-MM-dd') + 'T23:59:59.999'
-    def uri = "${baseUrl}/water/consumption?startDate=${startDate}&endDate=${endDate}&locationId=${locationId}&interval=1h"
-    def response = parent.makeAPIGet(uri, "Get Consumption")
-    def data = response.data
-    sendEvent(name: "totalGallonsToday", value: round(data?.aggregations?.sumTotalGallonsConsumed))
 }
 
 def getHealthTestInfo() {
@@ -242,7 +186,6 @@ def manualHealthTest() {
 
 def configure() {
     getDeviceInfo()
-    sendEvent(name:"numberOfButtons", value: 3)
     schedulePolling()
     state.configured = true
 }

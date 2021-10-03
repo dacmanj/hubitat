@@ -7,10 +7,10 @@
 
 definition(
 	parent: "dacmanj:FLO by Moen Device Manager",
-    name: "FLO by Moen Device Instance",
+    name: "FLO by Moen Location Instance",
     namespace: "dacmanj",
     author: "David Manuel",
-    description: "Child app for managing Moen Flo devices created",
+    description: "Child app for managing Moen Flo locations",
     category: "General",
 	iconUrl: "",
     iconX2Url: "",
@@ -26,25 +26,25 @@ preferences {
 }
 
 
-def deviceSelector() {
-    def label = getApp().label ? getApp().label : "Device Setup"
+def locationSelector() {
+    def label = getApp().label ? getApp().label : "Location Setup"
   	dynamicPage(name: "mainPage", title: "", nextPage: 'settingsPage', install: false, uninstall: true) {
 		  section(getFormat("title", label)) {
         input(
-          name: "deviceId", 
+          name: "locationId", 
           type: "enum", 
           required: true, 
-          title: "Device", 
+          title: "Location", 
           multiple: false, 
-          options: deviceOptions()
+          options: locationOptions()
         )
       }
     }
 }
 
 def mainPage() {
-  if (!deviceId) {
-    deviceSelector()
+  if (!locationId) {
+    locationSelector()
   } else {
     settingsPage()
   }
@@ -52,10 +52,17 @@ def mainPage() {
 
 def settingsPage() {
   initialize()
-  def label = getApp().label ? getApp().label : "Device Setup"
+  def label = getApp().label ? getApp().label : "Location Setup"
 	dynamicPage(name: "settingsPage", title: "", install: true, uninstall: true) {
 		section(getFormat("title", label)) {
-      paragraph("<b>Device Information</b><ul><li><b>Device Type:</b> ${state.deviceInfo?.deviceType}</li><li><b>Device Model: </b>${state.deviceInfo?.deviceModel}</li></ul>")
+      paragraph("<b>Location Information</b><ul><li><b>Nickname:</b> ${state.location?.nickname}</li><li><b>Address: </b>${state.location?.address}</li></ul>")
+      input(
+        name: "revertMode", 
+        type: "enum", 
+        title: "Revert Mode (after Sleep)", 
+        options: ["home","away","sleep"], 
+        defaultValue: "home"
+      )
       input(
         name: "pollingInterval", 
         type: "enum", 
@@ -63,6 +70,11 @@ def settingsPage() {
         options: 5..59,
         defaultValue: 5
       )
+      input(
+        name: "revertMinutes",
+        type: "number",
+        title: "Revert Time in Minutes (after Sleep)", 
+        defaultValue: 120)
       input (
         name: "logEnable", 
         type: "bool",
@@ -72,7 +84,7 @@ def settingsPage() {
 		}
     if (getChildDevices().size() > 0) {
       section("Linked Device") {
-        paragraph(displayListOfInstalledDevices())
+        paragraph(displayListOfChildDevices())
         paragraph("To remove the device, click Remove below.")
       }
     }
@@ -115,70 +127,62 @@ def logsOff() {
 
 def initialize() {
   log.info "initialize()"
-	def deviceInfo = parent?.state?.devicesCache[deviceId]
   def locationsCache = parent?.state?.locationsCache
-  def location = locationsCache[deviceInfo?.location?.id]
+  def location = locationsCache[locationId]
+  if (!location) parent.getLocationData(locationId)
   def locationName = location?.nickname
-  if (deviceInfo) {
-    log.debug "${locationName} - ${deviceInfo?.nickname}"
-    app.updateLabel("${locationName} - ${deviceInfo?.nickname} (${deviceInfo?.deviceType})")
-    state.deviceInfo = deviceInfo
-    state.location = location
+  if (location) {
+    def label = "${locationName}"
+    app.updateLabel(label)
+  } else {
+    log.error "Invalid locationid: ${locationId}"
   }
+  state.location = location
 }
 
-def displayListOfInstalledDevices() {
+def displayListOfChildDevices() {
     return "<ul>"+getChildDevices().collect {
         "<li><a href='/device/edit/$it.id'>$it.label</a></li>"
     }.join("\n")+"</ul>"
 }
 
-def deviceOptions() {
+def locationOptions() {
   def locations = parent?.state?.userData?.locations
-  def deviceOptions = [:]
+  def locationOptions = [:]
   locations.each { location ->
-      location.devices.each { dev ->
-        def value = "${location.nickname} - ${dev.nickname} (${dev.deviceType})"
-          def key = "${dev.id}"
-          deviceOptions["${key}"] = value
-      }
+    locationOptions["${location.id}"] = "${location.nickname}"
   }
-  deviceOptions = deviceOptions.sort { it.value }
-  return deviceOptions
+  locationOptions = locationOptions.sort { it.value }
+  return locationOptions
 }
 
 def createDevice() {
   log.info "createDevice()"
   def appId = getApp().id
-  String devDNI = "${deviceId}-${appId}"
+  def devDNI = "${locationId}-${appId}"
   def childDevice = getChildDevice(devDNI)
   def driverMap = parent.getDriverMap()
-  def deviceType = state.deviceInfo?.deviceType
-  def locationId = state.deviceInfo?.location?.id
-  def nickname = state.deviceInfo?.nickname
+  def deviceType = "location"
+  def nickname = state.location?.nickname
   if (!childDevice) {
     try {
       log.debug "Creating new device for ${deviceType} ${nickname}"
-      String devDriver = driverMap[deviceType] ?: driverMap["DEFAULT"]
+      String devDriver = driverMap[deviceType]
       log.debug "Driver: ${devDriver}"
       Map devProps = [
         name: (nickname), 
         label: (nickname),
         isComponent: true
       ]
-      if (locationDevice) {
-        childDevice = locationDevice.addChildDevice(childNamespace, devDriver, devDNI, devProps)
-      } else {
-        childDevice = addChildDevice(childNamespace, devDriver, devDNI, devProps)
-      }
+      childDevice = addChildDevice(childNamespace, devDriver, devDNI, devProps)
       return childDevice
     } catch (Exception ex) {
-      log.error("Unable to create device for ${deviceId}: $ex")
+      log.error("Unable to create device for ${locationId}: $ex")
     }
   }
 
   if (!childDevice) {
-    if (logEnable) log.debug("Failed to setup device ${deviceId}")
+    if (logEnable) log.debug("Failed to setup device ${locationId}")
   }
   
 }
@@ -199,27 +203,13 @@ def makeAPIPost(uri, body, requestType, successStatus = [200, 202]) {
   return parent.makeAPIPost(uri, body, requestType, successStatus)
 }
 
-def getDeviceData(deviceId) {
-  return parent.getDeviceData(deviceId)
-}
-
-def getDevicesCache() {
-  return parent.state.devicesCache
-}
 
 def getLocationsCache() {
   return parent.state.locationsCache
 }
 
-
 def getLocationData(locationId) {
   return parent.getLocationData(locationId)
-}
-
-def getLastDeviceAlert(deviceId) {
-  def uri = "${baseUrl}/alerts?isInternalAlarm=false&deviceId=${deviceId}"
-  def response = makeAPIGet(uri, "Get Alerts")
-  return response.data.items
 }
 
 def log(msg) {
