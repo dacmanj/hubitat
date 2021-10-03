@@ -79,6 +79,7 @@ def uninstalled() {
 def updated() {
 	log.info "Updated with settings: ${settings}"
   def device = getChildDevice("${deviceId}")
+  device.updated()
   if (deviceId && !device) {
     createDevice()
   }
@@ -172,12 +173,12 @@ def getFormat(type, myText=""){
 }
 
 
-def makeAPIGet(uri, request_type, success_status = [200, 202]) {
-  return parent.makeAPIGet(uri, request_type, success_status = [200, 202])
+def makeAPIGet(uri, requesType, success_status = [200, 202]) {
+  return parent.makeAPIGet(uri, requesType, success_status)
 }
 
-def makeAPIPost(uri, request_type, success_status = [200, 202]) {
-  return parent.makeAPIPost(uri, request_type, success_status = [200, 202])
+def makeAPIPost(uri, body, requestType, successStatus = [200, 202]) {
+  return parent.makeAPIPost(uri, body, requestType, successStatus)
 }
 
 def getDeviceData(deviceId) {
