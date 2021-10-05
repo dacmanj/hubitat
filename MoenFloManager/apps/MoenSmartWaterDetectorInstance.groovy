@@ -7,10 +7,10 @@
 
 definition(
 	parent: "dacmanj:Moen FLO Device Manager",
-    name: "Moen FLO Smart Shutoff Instance",
+    name: "Moen FLO Smart Water Detector Instance",
     namespace: "dacmanj",
     author: "David Manuel",
-    description: "Child app for managing Moen FLO devices created",
+    description: "Child app for managing Moen FLO Smart Water Detectors",
     category: "General",
 	iconUrl: "",
     iconX2Url: "",
@@ -27,7 +27,7 @@ preferences {
 
 
 def deviceSelector() {
-    def label = getApp().label ? getApp().label : "Device Setup"
+    def label = getApp().label ? getApp().label : "Location Setup"
   	dynamicPage(name: "mainPage", title: "", nextPage: 'settingsPage', install: false, uninstall: true) {
 		  section(getFormat("title", label)) {
         input(
@@ -52,7 +52,7 @@ def mainPage() {
 
 def settingsPage() {
   initialize()
-  def label = getApp().label ? getApp().label : "Device Setup"
+  def label = getApp().label ? getApp().label : "Location Setup"
 	dynamicPage(name: "settingsPage", title: "", install: true, uninstall: true) {
 		section(getFormat("title", label)) {
       paragraph("<b>Device Information</b><ul><li><b>Device Type:</b> ${state.deviceInfo?.deviceType}</li><li><b>Device Model: </b>${state.deviceInfo?.deviceModel}</li></ul>")
@@ -115,7 +115,7 @@ def logsOff() {
 
 def initialize() {
   log.info "initialize()"
-	def deviceInfo = parent?.state?.devicesCache[deviceId]
+  def deviceInfo = parent?.state?.devicesCache[deviceId]
   def locationsCache = parent?.state?.locationsCache
   def location = locationsCache[deviceInfo?.location?.id]
   def locationName = location?.nickname
@@ -159,7 +159,8 @@ def createDevice() {
   if (!childDevice) {
     try {
       log.debug "Creating new device for ${deviceType} ${nickname}"
-      String devDriver = driverMap[deviceType] ?: driverMap["flo_device_v2"]
+      deviceType = "puck_oem" //temp
+      String devDriver = driverMap[deviceType] ?: driverMap["puck_oem"]
       log.debug "Driver: ${devDriver}"
       Map devProps = [
         name: (nickname), 
@@ -195,32 +196,20 @@ def makeAPIPost(uri, body, requestType, successStatus = [200, 202]) {
   return parent.makeAPIPost(uri, body, requestType, successStatus)
 }
 
+
+def getLocationsCache() {
+  return parent.state.locationsCache
+}
+
+def getLocationData(locationId) {
+  return parent.getLocationData(locationId)
+}
+
 def getDeviceData(deviceId) {
   return parent.getDeviceData(deviceId)
 }
 
 def getDevicesCache() {
   return parent.state.devicesCache
-}
-
-def getLocationsCache() {
-  return parent.state.locationsCache
-}
-
-
-def getLocationData(locationId) {
-  return parent.getLocationData(locationId)
-}
-
-def getLastDeviceAlert(deviceId) {
-  def uri = "${baseUrl}/alerts?isInternalAlarm=false&deviceId=${deviceId}"
-  def response = makeAPIGet(uri, "Get Alerts")
-  return response.data.items
-}
-
-def log(msg) {
-	if (enableDebugLogging) {
-		log.debug(msg)	
-	}
 }
 

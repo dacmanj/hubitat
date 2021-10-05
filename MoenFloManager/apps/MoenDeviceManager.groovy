@@ -1,192 +1,318 @@
-/**
-    FLO by Moen for Hubitat by David Manuel is licensed under CC BY 4.0 see https://creativecommons.org/licenses/by/4.0
+/*
+    FLO by Moen Device Manager for Hubitat by David Manuel is licensed under CC BY 4.0 see https://creativecommons.org/licenses/by/4.0
     Software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
     ANY KIND, either express or implied. See the License for the specific language governing permissions and
     limitations under the License.
+*/
 
-    v2.0.0   2021-10-03    Forked standalone driver moved API and configuration to App
+definition(
+    name: "Moen FLO Device Manager",
+    namespace: "dacmanj",
+    author: "David Manuel",
+    description: "Moen FLO Device Manager",
+    category: "General",
+    iconUrl: "",
+    iconX2Url: "",
+    iconX3Url: "",
+    singleInstance: true
+)
 
- */
-
-metadata {
-    definition (name: "Moen FLO Smart Shutoff", namespace: "dacmanj", author: "David Manuel", importUrl: "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloSmartShutoff/moenflo.groovy") {
-        capability "Valve"
-        capability "TemperatureMeasurement"
-        capability "SignalStrength"
-
-        command "reset"
-        command "manualHealthTest"
-        command "pollMoen"
-
-        attribute "valve", "enum", ["open", "closed"]
-        attribute "temperature", "number"
-        attribute "gpm", "number"
-        attribute "psi", "number"
-        attribute "updated", "string"
-        attribute "rssi", "number"
-        attribute "ssid", "string"
-        attribute "lastHubitatHealthtestStatus", "string"
-        attribute "lastEvent", "string"
-        attribute "lastEventDetail", "string"
-        attribute "lastEventDateTime", "string"
-        attribute "lastHealthTestStatus", "string"
-        attribute "lastHealthTestDetail", "string"
-        attribute "lastHealthTestDateTime", "string"
-
-    }
-
+preferences {
+  page(name: "mainPage")
+  page(name: "deviceInstaller")
 }
 
 import groovy.transform.Field
+@Field final String childNamespace = "dacmanj" // namespace of child device drivers
+@Field final Map driverMap = [
+   "flo_device_v2":       "Moen FLO Smart Shutoff",
+   "puck_oem":            "Moen FLO Smart Water Detector",
+   "location":            "Moen FLO Location",
+   "DEFAULT":             "Moen FLO Smart Shutoff"
+]
+
 @Field final String baseUrl = 'https://api-gw.meetflo.com/api/v2'
+@Field final String authUrl = 'https://api.meetflo.com/api/v1/users/auth'
 
-def open() {
-    valveUpdate("open")
+def mainPage() {
+  if (!state.authenticated) {
+    authenticate()
+    return deviceInstaller()
+  } else {
+    return loginPage()
+  }
 }
 
-def reset() {
-    state.clear()
-    unschedule()
-    configure()
-}
-
-def updated() {
-    configure()
-    if (state.configured) pollMoen()
-}
-
-def installed() {
-    log.debug "start device installed()"
-    configure()
-}
-
-def unschedulePolling() {
-    unschedule(pollMoen)
-}
-
-def schedulePolling() {
-    unschedule(pollMoen)
-    if (parent?.pollingInterval) {
-        schedule("0 0/${parent?.pollingInterval} * 1/1 * ? *", pollMoen)
+def loginPage() {
+    if (state.authenticated) {
+        return deviceInstaller()
     }
-}
-
-def pollMoen() {
-    if (parent?.logEnable) log.debug("Polling Moen")
-    getDeviceInfo()
-    getLastAlerts()
-    getHealthTestInfo()
-}
-
-def close() {
-    valveUpdate("closed")
-}
-
-def home() {
-    setMode("home")
-}
-
-def away() {
-    setMode("away")
-}
-
-def sleepMode() {
-    setMode("sleep")
-}
-
-def valveUpdate(target) {
-    def deviceId = device.getDataValue("deviceId")
-    def uri = "${baseUrl}/devices/${deviceId}"
-    if (parent?.logEnable) log.debug "Updating valve status to ${target}"
-    def body = [valve:[target: target]]
-    def response = parent.makeAPIPost(uri, body, "Valve Update")
-    sendEvent(name: "valve", value: response?.data?.valve?.target)
-}
-
-
-def getDeviceInfo() {
-    def deviceId = device.deviceNetworkId.substring(0,36)
-    if (parent?.logEnable) log.debug "Getting device data for: ${deviceId}"
-    def deviceInfo = parent.getDeviceData(deviceId)
-    def location = parent.getLocationsCache()[deviceInfo?.location?.id]
-    device.updateDataValue("locationNickname", location?.nickname)
-    device.updateDataValue("locationAddress", location?.address)
-    device.updateDataValue("deviceId", deviceInfo?.id)
-    device.updateDataValue("locationId", deviceInfo?.location.id)
-    device.updateDataValue("deviceNickname", deviceInfo?.nickname)
-    device.updateDataValue("deviceType", deviceInfo?.deviceType)
-    device.updateDataValue("deviceModel", deviceInfo?.deviceModel)
-    device.updateDataValue("firmwareVersion", deviceInfo?.fwVersion)
-    sendEvent(name: "gpm", value: round(deviceInfo?.telemetry?.current?.gpm))
-    sendEvent(name: "psi", value: round(deviceInfo?.telemetry?.current?.psi))
-    def deviceTemperature = deviceInfo?.telemetry?.current?.tempF
-    if (deviceTemperature > 150) {
-        deviceTemperature = deviceTemperature / 3
-    }
-    sendEvent(name: "temperature", value: deviceTemperature, unit: "F")
-    sendEvent(name: "updated", value: deviceInfo?.telemetry?.current?.updated)
-    sendEvent(name: "valve", value: deviceInfo?.valve?.target)
-    sendEvent(name: "rssi", value: deviceInfo?.connectivity?.rssi)
-    sendEvent(name: "ssid", value: deviceInfo?.connectivity?.ssid)
-}
-
-def getLastAlerts() {
-    def deviceId = device.getDataValue("deviceId")
-    def data = parent.getLastDeviceAlert(deviceId)
-    if (data) {
-        sendEvent(name: "lastEvent", value: data[0]?.displayTitle)
-        sendEvent(name: "lastEventDetail", value: data[0].displayMessage)
-        sendEvent(name: "lastEventDateTime", value: data[0].createAt)
-        for (alert in data) {
-            if (alert?.healthTest?.roundId) {
-                sendEvent(name: "lastHealthTestStatus", value: alert.displayTitle)
-                sendEvent(name: "lastHealthTestDetail", value: alert.displayMessage)
-                sendEvent(name: "lastHealthTestDateTime", value: alert.createAt)
-                break;
+    dynamicPage(name: "mainPage", title: "Manage Your Moen Flo Devices", install: true, uninstall: true) {
+        section("<b>Credentials<b>") {
+            preferences {        
+              input(name: "username", type: "string", title:"User Name", description: "User Name", required: true, displayDuringSetup: true)
+              input(name: "password", type: "password", title:"Password", description: "Password", displayDuringSetup: true)
+              input(name: "btnLogin", type: "button", title: "Login")
             }
         }
     }
 }
 
-def round(d, places = 2) {
-    if (d) {
-        return (d as double).round(places)
+def installed() {
+  log.debug "installed"
+  initialize()
+}
+
+def updated() {
+  log.debug "updated"
+  initialize()
+	unsubscribe()
+  unschedule()
+  if (logEnable) runIn(1800,logsOff)
+}
+
+def logsOff() {
+  logEnable = false
+}
+
+def initialize() {
+  log.debug "initialize"
+  authenticate()
+  if (state.token) {
+    getUserInfo()
+    discoverDevices()
+  }
+  unschedule()
+  if (logEnable) {
+    log.info "There are ${childApps.size()} child apps"
+    childApps.each { child ->
+      log.info "Child app: ${child.label}"
+      log.info "Child app: ${child.id}"
+      log.info "Child app: ${child}"  
+    }
+  }
+}
+
+def logout() {
+  state.token = null
+  state.authenticated = false
+  state.authenticationFailures = 0
+  state.devicesCache = null
+  state.locationsCache = null
+  state.userData = null
+  log.debug "logout()"
+  loginPage()
+}
+
+def uninstalled() {
+  log.debug "uninstalled"
+  childApps.each { child ->
+    log.info "Deleting child app: ${child.label}"
+    deleteChildApp(child.id)
+  }
+}
+
+def deviceInstaller() {
+  if (!state.authenticated) {
+    return loginPage()
+  }
+
+  dynamicPage(name: "deviceInstaller", title: "", install: true, uninstall: true) {
+    section("<h3>Smart Shutoff Valves</h3>") {
+      app(name: "shutoffApps", appName: "Moen FLO Smart Shutoff Instance", namespace: "dacmanj", title: "<b>Add Device</b>", multiple: true)
+    }
+    section("<h3>Water Detectors</h3>") {
+      app(name: "waterDetectorApps", appName: "Moen FLO Smart Water Detector Instance", namespace: "dacmanj", title: "<b>Add Location</b>", multiple: true)
+    }
+    section("<h3>Locations</h3>") {
+      app(name: "locationApps", appName: "Moen FLO Location Instance", namespace: "dacmanj", title: "<b>Add Location</b>", multiple: true)
+    }
+    section("<b>Settings</b>") {
+      input(name: 'logEnable', type: "bool", title: "Enable App (and API) Debug Logging?", required: false, defaultValue: false, submitOnChange: true)
+      input(name: "btnLogout", type: "button", title: "Logout")
+    }
+  }
+}
+
+def getDriverMap() {
+    return driverMap;
+}
+
+def authenticate() {
+    if (logEnable) log.debug("authenticate()")
+    if (logEnable) log.debug("failure count: ${state.authenticationFailures}")
+    def uri = authUrl
+    if (!password) {
+        log.error("Login Failed: No password")
     }
     else {
-        return d
-    }
-}
-
-def getHealthTestInfo() {
-    def lastHealthTestId = device.getDataValue("lastHubitatHealthtestId")
-    def deviceId = device.getDataValue("deviceId")
-    def uri = "${baseUrl}/devices/${deviceId}/healthTest/${lastHealthTestId}"
-    if(lastHealthTestId && lastHealthTestId != "") {
-        def response = parent.makeAPIGet(uri, "Get Last Hubitat HealthTest Info")
-        sendEvent(name: "lastHubitatHealthtestStatus", value: response?.data?.status)
-        if (!response?.data?.status) {
-            device.removeDataValue("lastHubitatHealthtestId")
+        if (state.authenticationFailures > 3) {
+            log.error("Failed to authenticate after three tries. Giving up. Log out and back in to retry.")
         }
-    } else {
-        if (parent?.logEnable) log.info "Skipping Healthtest Update: No Hubitat Health Test Id Found"
+        
+        def body = [username:username, password:password]
+        def headers = [:]
+        headers.put("Content-Type", "application/json")
+
+        try {
+            httpPostJson([headers: headers, uri: uri, body: body]) { response -> def msg = response?.status
+                if (logEnable) log.debug("Login received response code ${response?.status}")
+                    if (response?.status == 200) {
+                        msg = "Success"
+                        state.token = response.data.token
+                        state.userId = response.data.tokenPayload.user.user_id
+                        state.authenticated = true
+                        state.authenticationFailures = 0
+                    }
+                    else {
+                        log.error "Login Failed: (${response.status}) ${response.data}"
+                        state.authenticated = false
+                        state.authentcationFailures += 1
+                    }
+              }
+        }
+        catch (Exception e) {
+            log.error "Login exception: ${e}"
+            log.error "Login Failed: Please confirm your Flo Credentials"
+            state.authenticated = false
+            state.authentcationFailures += 1
+        }
     }
 }
 
-def manualHealthTest() {
-    def deviceId = device.getDataValue("deviceId")
-    def uri = "${baseUrl}/devices/${deviceId}/healthTest/run"
-    def response = parent.makeAPIPost(uri, "", "Manual Health Test")
-    def roundId = response?.data?.roundId
-    def created = response?.data?.created
-    def status = response?.data?.status
-    device.updateDataValue("lastHubitatHealthtest", created)
-    device.updateDataValue("lastHubitatHealthtestId", roundId)
-    sendEvent(name: "lastHubitatHealthtestStatus", value: status)
+def getUserInfo() {
+  def userId = state.userId
+  def uri = "${baseUrl}/users/${userId}?expand=locations,alarmSettings"
+  def response = makeAPIGet(uri, "Get User Info")
+  state.userData = response.data
 }
 
-def configure() {
-    getDeviceInfo()
-    schedulePolling()
-    state.configured = true
+def discoverDevices() {
+  def locations = []
+  Map devicesCache = [:]
+  Map locationsCache = [:]
+  getUserInfo()
+  def userLocations = state.userData?.locations
+  if(userLocations) {
+    userLocations.each { location ->
+      def locationDetail = getLocationData(location.id)
+      def devices = locationDetail?.devices
+      if (devices) {
+        locations.add(locationDetail)
+        devices.each{ d ->
+          devicesCache << [(d.id): (d)]
+        }
+        locationsCache << [(locationDetail.id): (locationDetail)]
+      }
+    }
+  } else {
+    if (logEnable) log.debug "No locations in user data"
+  }
+  state.userData?.locations = locations
+  state.devicesCache = devicesCache
+  state.locationsCache = locationsCache
 }
 
+def getLocationData(locationId) {
+  def uri = "${baseUrl}/locations/${locationId}?expand=devices"
+  def response = makeAPIGet(uri, "Get Location Info")
+  return response.data
+}
+
+def getDeviceData(deviceId) {
+  def uri = "${baseUrl}/devices/${deviceId}"
+  def response = makeAPIGet(uri, "Get Device")
+  return response.data
+}
+
+def makeAPIGet(uri, request_type, success_status = [200, 202]) {
+    if (logEnable) log.debug "makeAPIGet: ${request_type} ${uri}"
+    def token = state.token
+    if (!token || token == "") authenticate();
+    def response = [:];
+    int max_tries = 2;
+    int tries = 0;
+    while (!response?.status && tries < max_tries) {
+        def headers = [:]
+        headers.put("Content-Type", "application/json")
+        headers.put("Authorization", token)
+
+        try {
+            httpGet([headers: headers, uri: uri]) { resp -> def msg = ""
+                if (logEnable) log.debug("${request_type} Received Response Code: ${resp?.status}")
+                if (resp?.status in success_status) {
+                    response = resp;
+                }
+                else {
+                    log.error "${request_type} Failed (${response.status}): ${response.data}"
+                }
+              }
+        }
+        catch (Exception e) {
+            log.error "${request_type} Exception: ${e}"
+            if (e.getMessage()?.contains("Forbidden") || e.getMessage()?.contains("Unauthorized")) {
+                log.debug "Forbidden/Unauthorized Exception..."
+            } else {
+                log.error "${request_type} Failed ${e}"
+            }
+            state.token = null
+            authenticate()
+
+        }
+        tries++
+
+    }
+    return response
+}
+
+def makeAPIPost(uri, body, request_type, success_status = [200, 202]) {
+    if (logEnable) log.debug "makeAPIGet: ${request_type} ${uri}"
+    def token = state.token
+    if (!token || token == "") authenticate();
+    def response = [:];
+    int max_tries = 2;
+    int tries = 0;
+    while (!response?.status && tries < max_tries) {
+        def headers = [:]
+        headers.put("Content-Type", "application/json")
+        headers.put("Authorization", token)
+
+        try {
+            httpPostJson([headers: headers, uri: uri, body: body]) { resp -> def msg = ""
+                if (logEnable) log.debug("${request_type} Received Response Code: ${resp?.status}")
+                if (resp?.status in success_status) {
+                    response = resp;
+                }
+                else {
+                    log.debug "${request_type} Failed (${resp.status}): ${resp.data}"
+                }
+            }
+        }
+        catch (Exception e) {
+            log.error "${request_type} Exception: ${e}"
+            if (e.getMessage().contains("Forbidden") || e.getMessage().contains("Unauthorized")) {
+                log.debug "Forbidden/Unauthorized Exception... Refreshing token..."
+                authenticate()
+            }
+        }
+        tries++
+
+    }
+    return response
+}
+
+
+void appButtonHandler(btn) {
+   switch(btn) {
+      case "btnLogout":
+         logout()
+         break
+      case "btnLogin":
+         authenticate()
+         discoverDevices()
+         deviceInstaller()
+         break
+      default:
+         log.warn "Unhandled app button press: $btn"
+   }
+}
