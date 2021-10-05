@@ -148,29 +148,31 @@ def deviceOptions() {
 }
 
 def createDevice() {
-  log.info "createDevice()"
-  def appId = getApp().id
-  String devDNI = "${deviceId}-${appId}"
-  def childDevice = getChildDevice(devDNI)
-  def driverMap = parent.getDriverMap()
-  def deviceType = state.deviceInfo?.deviceType
-  def locationId = state.deviceInfo?.location?.id
-  def nickname = state.deviceInfo?.nickname
-  if (!childDevice) {
-    try {
-      log.debug "Creating new device for ${deviceType} ${nickname}"
-      deviceType = "puck_oem" //temp
-      String devDriver = driverMap[deviceType] ?: driverMap["puck_oem"]
-      log.debug "Driver: ${devDriver}"
-      Map devProps = [
-        name: (nickname), 
-        label: (nickname),
-        isComponent: true
-      ]
-      childDevice = addChildDevice(childNamespace, devDriver, devDNI, devProps)
-      return childDevice
-    } catch (Exception ex) {
-      log.error("Unable to create device for ${deviceId}: $ex")
+  if (deviceId) {
+    log.info "createDevice()"
+    def appId = getApp().id
+    String devDNI = "${deviceId}-${appId}"
+    def childDevice = getChildDevice(devDNI)
+    def driverMap = parent.getDriverMap()
+    def deviceType = state.deviceInfo?.deviceType
+    def locationId = state.deviceInfo?.location?.id
+    def nickname = state.deviceInfo?.nickname
+    if (!childDevice) {
+      try {
+        log.debug "Creating new device for ${deviceType} ${nickname}"
+        deviceType = "puck_oem" //temp
+        String devDriver = driverMap[deviceType] ?: driverMap["puck_oem"]
+        log.debug "Driver: ${devDriver}"
+        Map devProps = [
+          name: (nickname), 
+          label: (nickname),
+          isComponent: true
+        ]
+        childDevice = addChildDevice(childNamespace, devDriver, devDNI, devProps)
+        return childDevice
+      } catch (Exception ex) {
+        log.error("Unable to create device for ${deviceId}: $ex")
+      }
     }
   }
 

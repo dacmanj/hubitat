@@ -69,6 +69,7 @@ def deviceInstaller() {
   dynamicPage(name: "deviceInstaller", title: "Manage Your Moen Flo Devices", install: true, uninstall: true) {
     section("") {
       input(name: "btnSetupAllDevices", type: "button", title: "Setup All Devices")
+      paragraph("<i>Creates devices for all Devices that don't already have devices installed.</i>")
     }
     section("<h3>Smart Shutoff Valves</h3>") {
       app(name: "shutoffApps", appName: appMap["flo_device_v2"], namespace: "dacmanj", title: "<b>Add Shutoff Valve</b>", multiple: true)
