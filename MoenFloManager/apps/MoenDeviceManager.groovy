@@ -71,13 +71,13 @@ def deviceInstaller() {
       input(name: "btnSetupAllDevices", type: "button", title: "Setup All Devices")
     }
     section("<h3>Smart Shutoff Valves</h3>") {
-      app(name: "shutoffApps", appName: "Moen FLO Smart Shutoff Instance", namespace: "dacmanj", title: "<b>Add Device</b>", multiple: true)
+      app(name: "shutoffApps", appName: appMap["flo_device_v2"], namespace: "dacmanj", title: "<b>Add Shutoff Valve</b>", multiple: true)
     }
     section("<h3>Water Detectors</h3>") {
-      app(name: "waterDetectorApps", appName: "Moen FLO Smart Water Detector Instance", namespace: "dacmanj", title: "<b>Add Location</b>", multiple: true)
+      app(name: "waterDetectorApps", appName: appMap["puck_oem"], namespace: "dacmanj", title: "<b>Add Water Detector</b>", multiple: true)
     }
     section("<h3>Locations</h3>") {
-      app(name: "locationApps", appName: "Moen FLO Location Instance", namespace: "dacmanj", title: "<b>Add Location</b>", multiple: true)
+      app(name: "locationApps", appName: appMap["location"], namespace: "dacmanj", title: "<b>Add Location</b>", multiple: true)
     }
     section("<b>Settings</b>") {
       input(name: 'logEnable', type: "bool", title: "Enable App (and API) Debug Logging?", required: false, defaultValue: false, submitOnChange: true)
@@ -307,7 +307,6 @@ def makeAPIPost(uri, body, request_type, success_status = [200, 202]) {
 }
 
 def setupAllDevices() {
-  //TODO: iterate on locations too
   if (logEnable) log.debug("setupAllDevices()")
   installedDevices = []
   getChildApps().each { app ->
@@ -323,12 +322,12 @@ def setupAllDevices() {
   }
   
   state.devicesCache.each{ did, dev ->
-    def isInstalled = (installedDevices.find({d -> d = did}))
+    def isInstalled = (installedDevices.find({d -> d == did}))
+    log.debug "checking ${did}"
     if(isInstalled) {
       if (logEnable) log.debug "Skipping Install of ${dev.nickname} (already installed)"
     } else {
       if (logEnable) log.debug "Installing ${dev.nickname} ${dev.deviceType}"
-      def driver = driverMap[dev.deviceType]
       def appInstanceType = appMap[dev.deviceType]
       if (logEnable) log.debug "Creating ${appInstanceType} app for ${dev.nickname}"
       def locationName = state.locationsCache[dev?.location?.id]?.nickname
@@ -342,6 +341,30 @@ def setupAllDevices() {
       childApp.updateSetting("pollingInterval", 10)
       childApp.updated()
     }
+  }
+
+  state.locationsCache.each { lid, loc ->
+    def isInstalled = (installedDevices.find({d -> d == lid}))
+    log.debug "checking ${lid} got ${isInstalled}"
+
+    if(isInstalled) {
+      if (logEnable) log.debug "Skipping Install of ${loc.nickname} (already installed)"
+      log.debug(isInstalled)
+    } else {
+      if (logEnable) log.debug "Installing ${loc.nickname} (location)"
+      def appInstanceType = appMap["location"]
+      if (logEnable) log.debug "Creating ${appInstanceType} app for ${loc.nickname}"
+      def appLabel = "${loc.nickname} (Location)"
+      try {
+        childApp = addChildApp("dacmanj", appInstanceType, appLabel)
+      } catch(e) {
+        log.error "Install error ${e.getMessage()}"
+      }
+      childApp.updateSetting("locationId", lid)
+      childApp.updateSetting("pollingInterval", 10)
+      childApp.updated()
+    }
+
   }
 }
 
