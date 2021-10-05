@@ -138,9 +138,11 @@ def deviceOptions() {
   def deviceOptions = [:]
   locations.each { location ->
       location.devices.each { dev ->
-        def value = "${location.nickname} - ${dev.nickname} (${dev.deviceType})"
+        if (dev?.deviceType == "puck_oem") {
+          def value = "${location.nickname} - ${dev.nickname} (${dev.deviceType})"
           def key = "${dev.id}"
           deviceOptions["${key}"] = value
+        }
       }
   }
   deviceOptions = deviceOptions.sort { it.value }
