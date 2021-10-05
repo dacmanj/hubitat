@@ -82,8 +82,8 @@ def settingsPage() {
 
 def installed() {
 	log.info "Installed with settings: ${settings}"
-	createDevice()
 	initialize()
+	createDevice()
 }
 
 
@@ -148,35 +148,36 @@ def deviceOptions() {
 }
 
 def createDevice() {
-  log.info "createDevice()"
-  def appId = getApp().id
-  String devDNI = "${deviceId}-${appId}"
-  def childDevice = getChildDevice(devDNI)
-  def driverMap = parent.getDriverMap()
-  def deviceType = state.deviceInfo?.deviceType
-  def locationId = state.deviceInfo?.location?.id
-  def nickname = state.deviceInfo?.nickname
-  if (!childDevice) {
-    try {
-      log.debug "Creating new device for ${deviceType} ${nickname}"
-      String devDriver = driverMap[deviceType] ?: driverMap["flo_device_v2"]
-      log.debug "Driver: ${devDriver}"
-      Map devProps = [
-        name: (nickname), 
-        label: (nickname),
-        isComponent: true
-      ]
-      childDevice = addChildDevice(childNamespace, devDriver, devDNI, devProps)
-      return childDevice
-    } catch (Exception ex) {
-      log.error("Unable to create device for ${deviceId}: $ex")
+  if (deviceId) {
+    log.info "createDevice()"
+    def appId = getApp().id
+    String devDNI = "${deviceId}-${appId}"
+    def childDevice = getChildDevice(devDNI)
+    def driverMap = parent.getDriverMap()
+    def deviceType = state.deviceInfo?.deviceType
+    def locationId = state.deviceInfo?.location?.id
+    def nickname = state.deviceInfo?.nickname
+    if (!childDevice) {
+      try {
+        log.debug "Creating new device for ${deviceType} ${nickname}"
+        String devDriver = driverMap[deviceType] ?: driverMap["flo_device_v2"]
+        log.debug "Driver: ${devDriver}"
+        Map devProps = [
+          name: (nickname), 
+          label: (nickname),
+          isComponent: true
+        ]
+        childDevice = addChildDevice(childNamespace, devDriver, devDNI, devProps)
+        return childDevice
+      } catch (Exception ex) {
+        log.error("Unable to create device for ${deviceId}: $ex")
+      }
+    }
+
+    if (!childDevice) {
+      if (logEnable) log.debug("Failed to setup device ${deviceId}")
     }
   }
-
-  if (!childDevice) {
-    if (logEnable) log.debug("Failed to setup device ${deviceId}")
-  }
-  
 }
 
 
