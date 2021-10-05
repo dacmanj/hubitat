@@ -82,8 +82,8 @@ def settingsPage() {
 
 def installed() {
 	log.info "Installed with settings: ${settings}"
-	createDevice()
 	initialize()
+	createDevice()
 }
 
 

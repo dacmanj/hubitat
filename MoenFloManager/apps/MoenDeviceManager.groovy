@@ -31,6 +31,13 @@ import groovy.transform.Field
    "DEFAULT":             "Moen FLO Smart Shutoff"
 ]
 
+@Field final Map appMap = [
+   "flo_device_v2":       "Moen FLO Smart Shutoff Instance",
+   "puck_oem":            "Moen FLO Smart Water Detector Instance",
+   "location":            "Moen FLO Location Instance",
+   "DEFAULT":             "Moen FLO Smart Shutoff Instance"
+]
+
 @Field final String baseUrl = 'https://api-gw.meetflo.com/api/v2'
 @Field final String authUrl = 'https://api.meetflo.com/api/v1/users/auth'
 
@@ -60,6 +67,9 @@ def deviceInstaller() {
   }
 
   dynamicPage(name: "deviceInstaller", title: "Manage Your Moen Flo Devices", install: true, uninstall: true) {
+    section("") {
+      input(name: "btnSetupAllDevices", type: "button", title: "Setup All Devices")
+    }
     section("<h3>Smart Shutoff Valves</h3>") {
       app(name: "shutoffApps", appName: "Moen FLO Smart Shutoff Instance", namespace: "dacmanj", title: "<b>Add Device</b>", multiple: true)
     }
@@ -296,18 +306,59 @@ def makeAPIPost(uri, body, request_type, success_status = [200, 202]) {
     return response
 }
 
+def setupAllDevices() {
+  //TODO: iterate on locations too
+  if (logEnable) log.debug("setupAllDevices()")
+  installedDevices = []
+  getChildApps().each { app ->
+    app.getChildDevices().each { dev ->
+      if (dev.deviceNetworkId && dev.deviceNetworkId.length() >= 36) {
+        installedDevices.add(dev?.deviceNetworkId?.substring(0,36))
+      }
+    }
+  }
+  
+  if (logEnable && installedDevices) {
+    log.debug("Found Installed Devices: ${installedDevices}")
+  }
+  
+  state.devicesCache.each{ did, dev ->
+    def isInstalled = (installedDevices.find({d -> d = did}))
+    if(isInstalled) {
+      if (logEnable) log.debug "Skipping Install of ${dev.nickname} (already installed)"
+    } else {
+      if (logEnable) log.debug "Installing ${dev.nickname} ${dev.deviceType}"
+      def driver = driverMap[dev.deviceType]
+      def appInstanceType = appMap[dev.deviceType]
+      if (logEnable) log.debug "Creating ${appInstanceType} app for ${dev.nickname}"
+      def locationName = state.locationsCache[dev?.location?.id]?.nickname
+      def appLabel = "${locationName} - ${dev.nickname} (${dev.deviceType})"
+      try {
+        childApp = addChildApp("dacmanj", appInstanceType, appLabel)
+      } catch(e) {
+        log.error "Install error ${e.getMessage()}"
+      }
+      childApp.updateSetting("deviceId", did)
+      childApp.updateSetting("pollingInterval", 10)
+      childApp.updated()
+    }
+  }
+}
 
 void appButtonHandler(btn) {
-   switch(btn) {
-      case "btnLogout":
-         logout()
-         break
-      case "btnLogin":
-         authenticate()
-         discoverDevices()
-         deviceInstaller()
-         break
-      default:
-         log.warn "Unhandled app button press: $btn"
-   }
+  switch(btn) {
+    case "btnLogout":
+      logout()
+      break
+    case "btnLogin":
+      authenticate()
+      discoverDevices()
+      deviceInstaller()
+      break
+    case "btnSetupAllDevices":
+      setupAllDevices()
+      break
+    default:
+      log.warn "Unhandled app button press: $btn"
+  }
 }
