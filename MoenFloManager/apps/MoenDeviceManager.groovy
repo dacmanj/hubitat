@@ -35,12 +35,8 @@ import groovy.transform.Field
 @Field final String authUrl = 'https://api.meetflo.com/api/v1/users/auth'
 
 def mainPage() {
-  if (!state.authenticated) {
-    authenticate()
-    return deviceInstaller()
-  } else {
-    return loginPage()
-  }
+  initialize()
+  loginPage()
 }
 
 def loginPage() {
@@ -58,6 +54,28 @@ def loginPage() {
     }
 }
 
+def deviceInstaller() {
+  if (!state.authenticated) {
+    return loginPage()
+  }
+
+  dynamicPage(name: "deviceInstaller", title: "Manage Your Moen Flo Devices", install: true, uninstall: true) {
+    section("<h3>Smart Shutoff Valves</h3>") {
+      app(name: "shutoffApps", appName: "Moen FLO Smart Shutoff Instance", namespace: "dacmanj", title: "<b>Add Device</b>", multiple: true)
+    }
+    section("<h3>Water Detectors</h3>") {
+      app(name: "waterDetectorApps", appName: "Moen FLO Smart Water Detector Instance", namespace: "dacmanj", title: "<b>Add Location</b>", multiple: true)
+    }
+    section("<h3>Locations</h3>") {
+      app(name: "locationApps", appName: "Moen FLO Location Instance", namespace: "dacmanj", title: "<b>Add Location</b>", multiple: true)
+    }
+    section("<b>Settings</b>") {
+      input(name: 'logEnable', type: "bool", title: "Enable App (and API) Debug Logging?", required: false, defaultValue: false, submitOnChange: true)
+      input(name: "btnLogout", type: "button", title: "Logout")
+    }
+  }
+}
+
 def installed() {
   log.debug "installed"
   initialize()
@@ -66,9 +84,6 @@ def installed() {
 def updated() {
   log.debug "updated"
   initialize()
-	unsubscribe()
-  unschedule()
-  if (logEnable) runIn(1800,logsOff)
 }
 
 def logsOff() {
@@ -77,20 +92,22 @@ def logsOff() {
 
 def initialize() {
   log.debug "initialize"
-  authenticate()
+  if (!state.authenticated) {
+    authenticate()
+  }
   if (state.token) {
     getUserInfo()
     discoverDevices()
   }
-  unschedule()
   if (logEnable) {
     log.info "There are ${childApps.size()} child apps"
     childApps.each { child ->
       log.info "Child app: ${child.label}"
       log.info "Child app: ${child.id}"
-      log.info "Child app: ${child}"  
     }
   }
+  unschedule()
+  runIn(1800, logsOff)
 }
 
 def logout() {
@@ -109,28 +126,6 @@ def uninstalled() {
   childApps.each { child ->
     log.info "Deleting child app: ${child.label}"
     deleteChildApp(child.id)
-  }
-}
-
-def deviceInstaller() {
-  if (!state.authenticated) {
-    return loginPage()
-  }
-
-  dynamicPage(name: "deviceInstaller", title: "", install: true, uninstall: true) {
-    section("<h3>Smart Shutoff Valves</h3>") {
-      app(name: "shutoffApps", appName: "Moen FLO Smart Shutoff Instance", namespace: "dacmanj", title: "<b>Add Device</b>", multiple: true)
-    }
-    section("<h3>Water Detectors</h3>") {
-      app(name: "waterDetectorApps", appName: "Moen FLO Smart Water Detector Instance", namespace: "dacmanj", title: "<b>Add Location</b>", multiple: true)
-    }
-    section("<h3>Locations</h3>") {
-      app(name: "locationApps", appName: "Moen FLO Location Instance", namespace: "dacmanj", title: "<b>Add Location</b>", multiple: true)
-    }
-    section("<b>Settings</b>") {
-      input(name: 'logEnable', type: "bool", title: "Enable App (and API) Debug Logging?", required: false, defaultValue: false, submitOnChange: true)
-      input(name: "btnLogout", type: "button", title: "Logout")
-    }
   }
 }
 
