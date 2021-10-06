@@ -116,14 +116,14 @@ def push(btn) {
 
 
 def getLocationInfo() {
-    def locationId = device.deviceNetworkId.substring(0,36)
-    if (parent?.logEnable) log.debug "Getting location data for: ${locationId}"
-    def location = parent.getLocationData(locationId)
-    device.updateDataValue("locationNickname", location?.nickname)
-    device.updateDataValue("locationAddress", location?.address)
-    device.updateDataValue("locationId", locationId)
-    def system_mode = location?.systemMode.target
-    sendEvent(name: "mode", value: system_mode)
+  def locationId = device.deviceNetworkId.substring(0,36)
+  if (parent?.logEnable) log.debug "Getting location data for: ${locationId}"
+  def location = parent.getLocationData(locationId)
+  device.updateDataValue("locationNickname", location?.nickname)
+  device.updateDataValue("locationAddress", location?.address)
+  device.updateDataValue("locationId", locationId)
+  def system_mode = location?.systemMode.target
+  sendEvent(name: "mode", value: system_mode)
 }
 
 def round(d, places = 2) {
@@ -136,19 +136,20 @@ def round(d, places = 2) {
 }
 
 def getConsumption() {
-    def locationId = device.getDataValue("locationId")
-    def startDate = new Date().format('yyyy-MM-dd') + 'T00:00:00.000'
-    def endDate = new Date().format('yyyy-MM-dd') + 'T23:59:59.999'
-    def uri = "${baseUrl}/water/consumption?startDate=${startDate}&endDate=${endDate}&locationId=${locationId}&interval=1h"
-    def response = parent.makeAPIGet(uri, "Get Consumption")
-    def data = response.data
-    sendEvent(name: "totalGallonsToday", value: round(data?.aggregations?.sumTotalGallonsConsumed))
+  def locationId = device.getDataValue("locationId")
+  def startDate = new Date().format('yyyy-MM-dd') + 'T00:00:00.000'
+  def endDate = new Date().format('yyyy-MM-dd') + 'T23:59:59.999'
+  def uri = "${baseUrl}/water/consumption?startDate=${startDate}&endDate=${endDate}&locationId=${locationId}&interval=1h"
+  def response = parent.makeAPIGet(uri, "Get Consumption")
+  def data = response.data
+  sendEvent(name: "totalGallonsToday", value: round(data?.aggregations?.sumTotalGallonsConsumed))
 }
 
 def configure() {
-    getLocationInfo()
-    sendEvent(name:"numberOfButtons", value: 3)
-    schedulePolling()
-    state.configured = true
+  def locationId = device.deviceNetworkId.substring(0,36)
+  getLocationInfo()
+  sendEvent(name:"numberOfButtons", value: 3)
+  schedulePolling()
+  state.configured = true
 }
 

@@ -77,6 +77,7 @@ def deviceInstaller() {
       input(name: "btnSetupAllDevices", type: "button", title: "Setup All Devices")
       paragraph("<i>Creates devices for all Devices that don't already have devices installed.</i>")
       paragraph(displayUnrecognizedDevices())
+      paragraph("<b>Make sure to click DONE when your devices have been configured.</b>")
     }
     section("<h3>Smart Shutoff Valves</h3>") {
       app(name: "shutoffApps", appName: appMap["flo_device_v2"], namespace: "dacmanj", title: "<b>Add Shutoff Valve</b>", multiple: true)

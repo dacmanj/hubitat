@@ -101,7 +101,6 @@ def settingsPage() {
 def installed() {
 	log.info "Installed with settings: ${settings}"
 	initialize()
-	createDevice()
 }
 
 
@@ -133,17 +132,19 @@ def logsOff() {
 
 def initialize() {
   log.info "initialize()"
-  def locationsCache = parent?.state?.locationsCache
-  def location = locationsCache[locationId]
-  if (!location) parent.getLocationData(locationId)
-  def locationName = location?.nickname
-  if (location) {
-    def label = "${locationName}"
-    app.updateLabel(label)
-  } else {
-    log.error "Invalid locationid: ${locationId}"
+  if (locationId) {
+    def locationsCache = parent?.state?.locationsCache
+    def location = locationsCache[locationId]
+    if (!location && locationId) parent.getLocationData(locationId)
+    def locationName = location?.nickname
+    if (location) {
+      def label = "${locationName}"
+      app.updateLabel(label)
+    } else {
+      log.error "Invalid locationid: ${locationId}"
+    }
+    state.location = location
   }
-  state.location = location
 }
 
 def displayListOfChildDevices() {
