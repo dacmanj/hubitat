@@ -1,6 +1,8 @@
 {
   "author": "David Manuel",
-  "gitHubUrl": "https://github.com/dacmanj/hubitat",
+  
+  "gitHubUrl": "https://github.com/dacmanj",
+  "payPalUrl": "https://paypal.me/dacmanj?locale.x=en_US",
   "packages": [
     {
       "id": "0bd3c02f-347f-4395-9b5d-431b918a2c8a",
