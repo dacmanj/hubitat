@@ -14,7 +14,7 @@
  
 
 metadata {
-    definition (name: "Moen FLO Location", namespace: "dacmanj", author: "David Manuel", importUrl: "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/drivers/FloByMoenLocation.groovy") {
+    definition (name: "Moen FLO Location", namespace: "dacmanj", author: "David Manuel") {
         capability "PushableButton"
         capability "LocationMode"
         capability "Momentary"
