@@ -69,8 +69,7 @@
       "id": "f020843f-9a00-402e-94e6-aa3d887f06db",
       "name": "Moen FLO Smart Shutoff",
       "namespace": "dacmanj",
-      "location": "h
-      ",
+      "location": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/drivers/MoenSmartShutoff.groovy",
       "required": true
     }
   ]
