@@ -168,7 +168,7 @@ def createDevice() {
     if (!childDevice) {
       try {
         log.debug "Creating new device for ${deviceType} ${nickname}"
-        deviceType = "puck_oem" //temp
+        deviceType = "puck_oem"
         String devDriver = driverMap[deviceType] ?: driverMap["puck_oem"]
         log.debug "Driver: ${devDriver}"
         Map devProps = [

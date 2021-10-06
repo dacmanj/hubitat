@@ -89,7 +89,7 @@ def deviceInstaller() {
       app(name: "locationApps", appName: appMap["location"], namespace: "dacmanj", title: "<b>Add Location</b>", multiple: true)
     }
     section("<b>Settings</b>") {
-      input(name: 'logEnable', type: "bool", title: "Enable App (and API) Debug Logging?", required: false, defaultValue: false, submitOnChange: true)
+      input(name: 'logEnable', type: "bool", title: "Enable App (and API) Debug Logging?", required: false, defaultValue: true, submitOnChange: true)
       input(name: "btnLogout", type: "button", title: "Logout")
     }
   }
