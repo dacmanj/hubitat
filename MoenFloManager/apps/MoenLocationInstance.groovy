@@ -100,7 +100,9 @@ def settingsPage() {
 
 def installed() {
 	log.info "Installed with settings: ${settings}"
-	updated()
+  if (locationId) {
+	  updated()
+  }
 }
 
 
@@ -116,7 +118,7 @@ def uninstalled() {
 def updated() {
 	log.info "Updated with settings: ${settings}"
   initialize()
-  def childDevice = getChildDevice("${deviceId}-${getApp().id}")
+  def childDevice = getChildDevice("${locationId}-${getApp().id}")
   if (childDevice) {
     childDevice.updated()
   } else {
