@@ -1,17 +1,20 @@
 /**
- * Moen Flo Water Detector for Hubitat 
- * Based on Moen Flo for Hubitat by David Manuel https://github.com/dacmanj/hubitat-moenflo
+ * Moen Flo Manager for Hubitat By David Manuel
+ *   with contributions from Jeffrey Laughter (https://raw.githubusercontent.com/jlaughter/hubitat-moenflo/master/moenflodetector.groovy)
  * Licensed under CC BY 4.0 see https://creativecommons.org/licenses/by/4.0
  * Software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF 
  * ANY KIND, either express or implied. See the License for the specific language governing permissions and 
  * limitations under the License.
  *
- * 2020-09-17 v0.0.1 - Modified v0.1.07-alpha to support Moen Flo Water Detectors - Jeffrey Laughter
+ *  Revision History
+ *  2021-10-06    Initial Release of App - Forked standalone driver moved API and configuration to App
+ *
  * 
  */
 
+
 metadata {
-    definition (name: "Moen FLO Smart Water Detector", namespace: "dacmanj", author: "David Manuel, Jeffrey Laughter") {
+    definition (name: "Moen FLO Smart Water Detector", namespace: "dacmanj", author: "David Manuel") {
         capability "RelativeHumidityMeasurement"
         capability "TemperatureMeasurement"
         capability "WaterSensor"

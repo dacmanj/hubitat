@@ -1,100 +1,130 @@
-/*
-    FLO by Moen Device Manager for Hubitat by David Manuel is licensed under CC BY 4.0 see https://creativecommons.org/licenses/by/4.0
-    Software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
-    ANY KIND, either express or implied. See the License for the specific language governing permissions and
-    limitations under the License.
-*/
+/**
+ * Moen Flo Manager for Hubitat 
+ * Licensed under CC BY 4.0 see https://creativecommons.org/licenses/by/4.0
+ * Software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF 
+ * ANY KIND, either express or implied. See the License for the specific language governing permissions and 
+ * limitations under the License.
+ *
+ *  Revision History
+ *  2021-10-06    Initial Release of App - Forked standalone driver moved API and configuration to App
+ *
+ * 
+ */
 
 definition(
-    name: "Moen FLO Device Manager",
+	parent: "dacmanj:Moen FLO Device Manager",
+    name: "Moen FLO Location Instance",
     namespace: "dacmanj",
     author: "David Manuel",
-    description: "Moen FLO Device Manager",
+    description: "Child app for managing Moen FLO locations",
     category: "General",
-    iconUrl: "",
+	iconUrl: "",
     iconX2Url: "",
-    iconX3Url: "",
-    singleInstance: true
-)
-
-preferences {
-  page(name: "mainPage")
-  page(name: "deviceInstaller")
-}
+    iconX3Url: "")
 
 import groovy.transform.Field
 @Field final String childNamespace = "dacmanj" // namespace of child device drivers
-@Field final Map driverMap = [
-   "flo_device_v2":       "Moen FLO Smart Shutoff",
-   "puck_oem":            "Moen FLO Smart Water Detector",
-   "location":            "Moen FLO Location",
-   "DEFAULT":             "Moen FLO Smart Shutoff"
-]
-
-@Field final Map appMap = [
-   "flo_device_v2":       "Moen FLO Smart Shutoff Instance",
-   "puck_oem":            "Moen FLO Smart Water Detector Instance",
-   "location":            "Moen FLO Location Instance",
-   "DEFAULT":             "Moen FLO Smart Shutoff Instance"
-]
-
 @Field final String baseUrl = 'https://api-gw.meetflo.com/api/v2'
-@Field final String authUrl = 'https://api.meetflo.com/api/v1/users/auth'
+
+preferences {
+  page(name: "mainPage")
+  page(name: "settingsPage")
+}
+
+
+def locationSelector() {
+    def label = getApp().label ? getApp().label : "Location Setup"
+  	dynamicPage(name: "mainPage", title: "", nextPage: 'settingsPage', install: false, uninstall: true) {
+		  section(getFormat("title", label)) {
+        input(
+          name: "locationId", 
+          type: "enum", 
+          required: true, 
+          title: "Location", 
+          multiple: false, 
+          options: locationOptions()
+        )
+      }
+    }
+}
 
 def mainPage() {
+  if (!locationId) {
+    locationSelector()
+  } else {
+    settingsPage()
+  }
+}
+
+def settingsPage() {
   initialize()
-  loginPage()
+  def label = getApp().label ? getApp().label : "Location Setup"
+	dynamicPage(name: "settingsPage", title: "", install: true, uninstall: true) {
+		section(getFormat("title", label)) {
+      paragraph("<b>Location Information</b><ul><li><b>Nickname:</b> ${state.location?.nickname}</li><li><b>Address: </b>${state.location?.address}</li></ul>")
+      input(
+        name: "revertMode", 
+        type: "enum", 
+        title: "Revert Mode (after Sleep)", 
+        options: ["home","away","sleep"], 
+        defaultValue: "home"
+      )
+      input(
+        name: "pollingInterval", 
+        type: "enum", 
+        title: "Polling Interval (in Minutes)",
+        options: 5..59,
+        defaultValue: 5
+      )
+      input(
+        name: "revertMinutes",
+        type: "number",
+        title: "Revert Time in Minutes (after Sleep)", 
+        defaultValue: 120)
+      input (
+        name: "logEnable", 
+        type: "bool",
+        title: "Enable Device Debug Logging",
+        defaultValue: true
+      )
+		}
+    if (getChildDevices().size() > 0) {
+      section("Linked Device") {
+        paragraph(displayListOfChildDevices())
+        paragraph("To remove the device, click Remove below.")
+      }
+    }
+	}
 }
 
-def loginPage() {
-    if (state.authenticated) {
-        return deviceInstaller()
-    }
-    dynamicPage(name: "mainPage", title: "Manage Your Moen Flo Devices", install: true, uninstall: true) {
-        section("<b>Credentials<b>") {
-            preferences {        
-              input(name: "username", type: "string", title:"User Name", description: "User Name", required: true, displayDuringSetup: true)
-              input(name: "password", type: "password", title:"Password", description: "Password", displayDuringSetup: true)
-              input(name: "btnLogin", type: "button", title: "Login")
-            }
-        }
-    }
-}
-
-def deviceInstaller() {
-  if (!state.authenticated) {
-    return loginPage()
-  }
-
-  dynamicPage(name: "deviceInstaller", title: "Manage Your Moen Flo Devices", install: true, uninstall: true) {
-    section("") {
-      input(name: "btnSetupAllDevices", type: "button", title: "Setup All Devices")
-      paragraph("<i>Creates devices for all Devices that don't already have devices installed.</i>")
-    }
-    section("<h3>Smart Shutoff Valves</h3>") {
-      app(name: "shutoffApps", appName: appMap["flo_device_v2"], namespace: "dacmanj", title: "<b>Add Shutoff Valve</b>", multiple: true)
-    }
-    section("<h3>Water Detectors</h3>") {
-      app(name: "waterDetectorApps", appName: appMap["puck_oem"], namespace: "dacmanj", title: "<b>Add Water Detector</b>", multiple: true)
-    }
-    section("<h3>Locations</h3>") {
-      app(name: "locationApps", appName: appMap["location"], namespace: "dacmanj", title: "<b>Add Location</b>", multiple: true)
-    }
-    section("<b>Settings</b>") {
-      input(name: 'logEnable', type: "bool", title: "Enable App (and API) Debug Logging?", required: false, defaultValue: false, submitOnChange: true)
-      input(name: "btnLogout", type: "button", title: "Logout")
-    }
-  }
-}
 
 def installed() {
-  log.debug "installed"
-  initialize()
+	log.info "Installed with settings: ${settings}"
+	initialize()
+	createDevice()
 }
 
+
+def uninstalled() {
+  log.info "uninstalled"
+  childDevices.each {
+    log.info "Deleting child device: ${it.displayName}"
+    deleteChildDevice(it.deviceNetworkId)
+  }
+}
+
+
 def updated() {
-  log.debug "updated"
+	log.info "Updated with settings: ${settings}"
   initialize()
+  def childDevice = getChildDevice("${deviceId}-${getApp().id}")
+  if (childDevice) {
+    childDevice.updated()
+  } else {
+    createDevice()
+  }
+  if (logEnable) runIn(1800,logsOff)
+	unsubscribe()
 }
 
 def logsOff() {
@@ -102,287 +132,88 @@ def logsOff() {
 }
 
 def initialize() {
-  log.debug "initialize"
-  if (!state.authenticated) {
-    authenticate()
-  }
-  if (state.token) {
-    getUserInfo()
-    discoverDevices()
-  }
-  if (logEnable) {
-    log.info "There are ${childApps.size()} child apps"
-    childApps.each { child ->
-      log.info "Child app: ${child.label}"
-      log.info "Child app: ${child.id}"
-    }
-  }
-  unschedule()
-  runIn(1800, logsOff)
-}
-
-def logout() {
-  state.token = null
-  state.authenticated = false
-  state.authenticationFailures = 0
-  state.devicesCache = null
-  state.locationsCache = null
-  state.userData = null
-  log.debug "logout()"
-  loginPage()
-}
-
-def uninstalled() {
-  log.debug "uninstalled"
-  childApps.each { child ->
-    log.info "Deleting child app: ${child.label}"
-    deleteChildApp(child.id)
-  }
-}
-
-def getDriverMap() {
-    return driverMap;
-}
-
-def authenticate() {
-    if (logEnable) log.debug("authenticate()")
-    if (logEnable) log.debug("failure count: ${state.authenticationFailures}")
-    def uri = authUrl
-    if (!password) {
-        log.error("Login Failed: No password")
-    }
-    else {
-        if (state.authenticationFailures > 3) {
-            log.error("Failed to authenticate after three tries. Giving up. Log out and back in to retry.")
-        }
-        
-        def body = [username:username, password:password]
-        def headers = [:]
-        headers.put("Content-Type", "application/json")
-
-        try {
-            httpPostJson([headers: headers, uri: uri, body: body]) { response -> def msg = response?.status
-                if (logEnable) log.debug("Login received response code ${response?.status}")
-                    if (response?.status == 200) {
-                        msg = "Success"
-                        state.token = response.data.token
-                        state.userId = response.data.tokenPayload.user.user_id
-                        state.authenticated = true
-                        state.authenticationFailures = 0
-                    }
-                    else {
-                        log.error "Login Failed: (${response.status}) ${response.data}"
-                        state.authenticated = false
-                        state.authentcationFailures += 1
-                    }
-              }
-        }
-        catch (Exception e) {
-            log.error "Login exception: ${e}"
-            log.error "Login Failed: Please confirm your Flo Credentials"
-            state.authenticated = false
-            state.authentcationFailures += 1
-        }
-    }
-}
-
-def getUserInfo() {
-  def userId = state.userId
-  def uri = "${baseUrl}/users/${userId}?expand=locations,alarmSettings"
-  def response = makeAPIGet(uri, "Get User Info")
-  state.userData = response.data
-}
-
-def discoverDevices() {
-  def locations = []
-  Map devicesCache = [:]
-  Map locationsCache = [:]
-  getUserInfo()
-  def userLocations = state.userData?.locations
-  if(userLocations) {
-    userLocations.each { location ->
-      def locationDetail = getLocationData(location.id)
-      def devices = locationDetail?.devices
-      if (devices) {
-        locations.add(locationDetail)
-        devices.each{ d ->
-          devicesCache << [(d.id): (d)]
-        }
-        locationsCache << [(locationDetail.id): (locationDetail)]
-      }
-    }
+  log.info "initialize()"
+  def locationsCache = parent?.state?.locationsCache
+  def location = locationsCache[locationId]
+  if (!location) parent.getLocationData(locationId)
+  def locationName = location?.nickname
+  if (location) {
+    def label = "${locationName}"
+    app.updateLabel(label)
   } else {
-    if (logEnable) log.debug "No locations in user data"
+    log.error "Invalid locationid: ${locationId}"
   }
-  state.userData?.locations = locations
-  state.devicesCache = devicesCache
-  state.locationsCache = locationsCache
+  state.location = location
+}
+
+def displayListOfChildDevices() {
+    return "<ul>"+getChildDevices().collect {
+        "<li><a href='/device/edit/$it.id'>$it.label</a></li>"
+    }.join("\n")+"</ul>"
+}
+
+def locationOptions() {
+  def locations = parent?.state?.userData?.locations
+  def locationOptions = [:]
+  locations.each { location ->
+    locationOptions["${location.id}"] = "${location.nickname}"
+  }
+  locationOptions = locationOptions.sort { it.value }
+  return locationOptions
+}
+
+def createDevice() {
+  log.info "createDevice()"
+  def appId = getApp().id
+  def devDNI = "${locationId}-${appId}"
+  def childDevice = getChildDevice(devDNI)
+  def driverMap = parent.getDriverMap()
+  def deviceType = "location"
+  def nickname = state.location?.nickname
+  if (!childDevice) {
+    try {
+      log.debug "Creating new device for ${deviceType} ${nickname}"
+      String devDriver = driverMap[deviceType]
+      log.debug "Driver: ${devDriver}"
+      Map devProps = [
+        name: (nickname), 
+        label: (nickname),
+        isComponent: true
+      ]
+      childDevice = addChildDevice(childNamespace, devDriver, devDNI, devProps)
+      return childDevice
+    } catch (Exception ex) {
+      log.error("Unable to create device for ${locationId}: $ex")
+    }
+  }
+
+  if (!childDevice) {
+    if (logEnable) log.debug("Failed to setup device ${locationId}")
+  }
+  
+}
+
+
+def getFormat(type, myText=""){
+	if(type == "header-green") return "<div style='color:#ffffff;font-weight: bold;background-color:#81BC00;border: 1px solid;box-shadow: 2px 3px #A9A9A9'>${myText}</div>"
+  if(type == "line") return "\n<hr style='background-color:#1A77C9; height: 1px; border: 0;'></hr>"
+	if(type == "title") return "<h2 style='color:#1A77C9;font-weight: bold'>${myText}</h2>"
+}
+
+
+def makeAPIGet(uri, requesType, success_status = [200, 202]) {
+  return parent.makeAPIGet(uri, requesType, success_status)
+}
+
+def makeAPIPost(uri, body, requestType, successStatus = [200, 202]) {
+  return parent.makeAPIPost(uri, body, requestType, successStatus)
+}
+
+
+def getLocationsCache() {
+  return parent.state.locationsCache
 }
 
 def getLocationData(locationId) {
-  def uri = "${baseUrl}/locations/${locationId}?expand=devices"
-  def response = makeAPIGet(uri, "Get Location Info")
-  return response.data
-}
-
-def getDeviceData(deviceId) {
-  def uri = "${baseUrl}/devices/${deviceId}"
-  def response = makeAPIGet(uri, "Get Device")
-  return response.data
-}
-
-def makeAPIGet(uri, request_type, success_status = [200, 202]) {
-    if (logEnable) log.debug "makeAPIGet: ${request_type} ${uri}"
-    def token = state.token
-    if (!token || token == "") authenticate();
-    def response = [:];
-    int max_tries = 2;
-    int tries = 0;
-    while (!response?.status && tries < max_tries) {
-        def headers = [:]
-        headers.put("Content-Type", "application/json")
-        headers.put("Authorization", token)
-
-        try {
-            httpGet([headers: headers, uri: uri]) { resp -> def msg = ""
-                if (logEnable) log.debug("${request_type} Received Response Code: ${resp?.status}")
-                if (resp?.status in success_status) {
-                    response = resp;
-                }
-                else {
-                    log.error "${request_type} Failed (${response.status}): ${response.data}"
-                }
-              }
-        }
-        catch (Exception e) {
-            log.error "${request_type} Exception: ${e}"
-            if (e.getMessage()?.contains("Forbidden") || e.getMessage()?.contains("Unauthorized")) {
-                log.debug "Forbidden/Unauthorized Exception..."
-            } else {
-                log.error "${request_type} Failed ${e}"
-            }
-            state.token = null
-            authenticate()
-
-        }
-        tries++
-
-    }
-    return response
-}
-
-def makeAPIPost(uri, body, request_type, success_status = [200, 202]) {
-    if (logEnable) log.debug "makeAPIGet: ${request_type} ${uri}"
-    def token = state.token
-    if (!token || token == "") authenticate();
-    def response = [:];
-    int max_tries = 2;
-    int tries = 0;
-    while (!response?.status && tries < max_tries) {
-        def headers = [:]
-        headers.put("Content-Type", "application/json")
-        headers.put("Authorization", token)
-
-        try {
-            httpPostJson([headers: headers, uri: uri, body: body]) { resp -> def msg = ""
-                if (logEnable) log.debug("${request_type} Received Response Code: ${resp?.status}")
-                if (resp?.status in success_status) {
-                    response = resp;
-                }
-                else {
-                    log.debug "${request_type} Failed (${resp.status}): ${resp.data}"
-                }
-            }
-        }
-        catch (Exception e) {
-            log.error "${request_type} Exception: ${e}"
-            if (e.getMessage().contains("Forbidden") || e.getMessage().contains("Unauthorized")) {
-                log.debug "Forbidden/Unauthorized Exception... Refreshing token..."
-                authenticate()
-            }
-        }
-        tries++
-
-    }
-    return response
-}
-
-def setupAllDevices() {
-  if (logEnable) log.debug("setupAllDevices()")
-  installedDevices = []
-  getChildApps().each { app ->
-    app.getChildDevices().each { dev ->
-      if (dev.deviceNetworkId && dev.deviceNetworkId.length() >= 36) {
-        installedDevices.add(dev?.deviceNetworkId?.substring(0,36))
-      }
-    }
-  }
-  
-  if (logEnable && installedDevices) {
-    log.debug("Found Installed Devices: ${installedDevices}")
-  }
-  
-  state.devicesCache.each{ did, dev ->
-    def isInstalled = (installedDevices.find({d -> d == did}))
-    log.debug "checking ${did}"
-    if(isInstalled) {
-      if (logEnable) log.debug "Skipping Install of ${dev.nickname} (already installed)"
-    } else {
-      if (logEnable) log.debug "Installing ${dev.nickname} ${dev.deviceType}"
-      def appInstanceType = appMap[dev.deviceType]
-      if (logEnable) log.debug "Creating ${appInstanceType} app for ${dev.nickname}"
-      def locationName = state.locationsCache[dev?.location?.id]?.nickname
-      def appLabel = "${locationName} - ${dev.nickname} (${dev.deviceType})"
-      try {
-        childApp = addChildApp("dacmanj", appInstanceType, appLabel)
-      } catch(e) {
-        log.error "Install error ${e.getMessage()}"
-      }
-      childApp.updateSetting("deviceId", did)
-      childApp.updateSetting("pollingInterval", 10)
-      childApp.updated()
-    }
-  }
-
-  state.locationsCache.each { lid, loc ->
-    def isInstalled = (installedDevices.find({d -> d == lid}))
-    log.debug "checking ${lid} got ${isInstalled}"
-
-    if(isInstalled) {
-      if (logEnable) log.debug "Skipping Install of ${loc.nickname} (already installed)"
-      log.debug(isInstalled)
-    } else {
-      if (logEnable) log.debug "Installing ${loc.nickname} (location)"
-      def appInstanceType = appMap["location"]
-      if (logEnable) log.debug "Creating ${appInstanceType} app for ${loc.nickname}"
-      def appLabel = "${loc.nickname} (Location)"
-      try {
-        childApp = addChildApp("dacmanj", appInstanceType, appLabel)
-      } catch(e) {
-        log.error "Install error ${e.getMessage()}"
-      }
-      childApp.updateSetting("locationId", lid)
-      childApp.updateSetting("pollingInterval", 10)
-      childApp.updated()
-    }
-
-  }
-}
-
-void appButtonHandler(btn) {
-  switch(btn) {
-    case "btnLogout":
-      logout()
-      break
-    case "btnLogin":
-      authenticate()
-      discoverDevices()
-      deviceInstaller()
-      break
-    case "btnSetupAllDevices":
-      setupAllDevices()
-      break
-    default:
-      log.warn "Unhandled app button press: $btn"
-  }
+  return parent.getLocationData(locationId)
 }
