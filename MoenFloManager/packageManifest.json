@@ -13,7 +13,7 @@
       "location": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/apps/MoenDeviceManager.groovy",
       "required": true,
       "oauth": false,
-      "primary": false
+      "primary": true
     },
     {
       "id": "ecfcc7e9-db5e-46d5-8ef3-06d0d8986fa6",
