@@ -52,13 +52,6 @@
       "required": true
     },
     {
-      "id": "f10d71ea-f4a8-436a-b2f0-a03b50237f2c",
-      "name": "Moen FLO Location",
-      "namespace": "dacmanj",
-      "location": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/drivers/MoenLocation.groovy",
-      "required": true
-    },
-    {
       "id": "888b906e-fc4b-400f-ae1b-0c5281001720",
       "name": "Moen FLO Smart Water Detector",
       "namespace": "dacmanj",
