@@ -17,7 +17,7 @@
     },
     {
       "id": "ecfcc7e9-db5e-46d5-8ef3-06d0d8986fa6",
-      "name": "Moen FLO Device Manager",
+      "name": "Moen FLO Location Instance",
       "namespace": "dacmanj",
       "location": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/apps/MoenLocationInstance.groovy",
       "required": true,
@@ -69,7 +69,8 @@
       "id": "f020843f-9a00-402e-94e6-aa3d887f06db",
       "name": "Moen FLO Smart Shutoff",
       "namespace": "dacmanj",
-      "location": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/drivers/MoenSmartShutoff.groovy",
+      "location": "h
+      ",
       "required": true
     }
   ]
