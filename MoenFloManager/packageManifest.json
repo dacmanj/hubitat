@@ -4,6 +4,7 @@
   "version": "1.0",
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2021-10-06",
+  "licenseFile": "https://creativecommons.org/licenses/by/4.0",
   "apps": [
     {
       "id": "817339ff-8a6e-4d03-ba56-8591eb96c60e",
