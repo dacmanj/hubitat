@@ -76,6 +76,7 @@ def deviceInstaller() {
     section("") {
       input(name: "btnSetupAllDevices", type: "button", title: "Setup All Devices")
       paragraph("<i>Creates devices for all Devices that don't already have devices installed.</i>")
+      paragraph(displayUnrecognizedDevices())
     }
     section("<h3>Smart Shutoff Valves</h3>") {
       app(name: "shutoffApps", appName: appMap["flo_device_v2"], namespace: "dacmanj", title: "<b>Add Shutoff Valve</b>", multiple: true)
@@ -373,6 +374,24 @@ def setupAllDevices() {
     }
 
   }
+}
+
+def displayUnrecognizedDevices() {
+  if (logEnable) log.debug "displayUnrecognizedDevices()"
+  def unrecognizedDevices = []
+  state.devicesCache.each { id, d ->
+    if (!driverMap.containsKey(d.deviceType)) {
+      unrecognizedDevices.add(d)
+    } 
+  }
+  if (unrecognizedDevices) {
+    def unrecognizedDevicesError = "<p style=\"color: red;\">Unrecognized devices detected, please send these to <a href=\"mailto:david@dcmanjr.com\">David Manuel</a>:</p>"
+    return unrecognizedDevicesError + "<ul>"+unrecognizedDevices.collect {
+    "<li>${it.nickname} (${it.deviceType}) </a></li>"
+    }.join("\n")+"</ul>"
+  } else {
+    return ""
+  }  
 }
 
 void appButtonHandler(btn) {
