@@ -56,11 +56,11 @@ def loginPage() {
     if (state.authenticated) {
         return deviceInstaller()
     }
-    dynamicPage(name: "mainPage", title: "Manage Your Moen Flo Devices", install: true, uninstall: true) {
+    dynamicPage(name: "mainPage", title: "Manage Your Moen Flo Devices", install: false, uninstall: true) {
         section("<b>Credentials<b>") {
             preferences {        
               input(name: "username", type: "string", title:"User Name", description: "User Name", required: true, displayDuringSetup: true)
-              input(name: "password", type: "password", title:"Password", description: "Password", displayDuringSetup: true)
+              input(name: "password", type: "password", title:"Password", description: "Password", required: true, displayDuringSetup: true)
               input(name: "btnLogin", type: "button", title: "Login")
             }
         }
