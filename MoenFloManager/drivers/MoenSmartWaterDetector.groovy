@@ -2,14 +2,14 @@
  * Moen Flo Manager for Hubitat By David Manuel
  *   with contributions from Jeffrey Laughter (https://raw.githubusercontent.com/jlaughter/hubitat-moenflo/master/moenflodetector.groovy)
  * Licensed under CC BY 4.0 see https://creativecommons.org/licenses/by/4.0
- * Software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF 
- * ANY KIND, either express or implied. See the License for the specific language governing permissions and 
+ * Software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
  *
  *  Revision History
  *  2021-10-06    Initial Release of App - Forked standalone driver moved API and configuration to App
  *
- * 
+ *
  */
 
 
@@ -31,7 +31,7 @@ metadata {
         attribute "ssid", "string"
         attribute "lastEvent", "string"
         attribute "lastEventDetail", "string"
-        attribute "lastEventDateTime", "string"   
+        attribute "lastEventDateTime", "string"
     }
 
 }
@@ -91,7 +91,7 @@ def getDeviceInfo() {
     def WATER_STATES = [1: "wet", 2: "dry"]
     if (water_state) {
         sendEvent(name: "water", value: WATER_STATES[1])}
-    else { sendEvent(name: "water", value: WATER_STATES[2])}            
+    else { sendEvent(name: "water", value: WATER_STATES[2])}
     sendEvent(name: "updated", value: deviceInfo?.telemetry?.current?.updated)
     sendEvent(name: "rssi", value: deviceInfo?.fwProperties?.telemetry_rssi)
     sendEvent(name: "ssid", value: deviceInfo?.fwProperties?.wifi_sta_ssid)
@@ -105,8 +105,8 @@ def getLastAlerts() {
     def data = parent.getLastDeviceAlert(deviceId)
     if (data) {
         sendEvent(name: "lastEvent", value: data[0]?.displayTitle)
-        sendEvent(name: "lastEventDetail", value: data[0].displayMessage)
-        sendEvent(name: "lastEventDateTime", value: data[0].createAt)
+        sendEvent(name: "lastEventDetail", value: data[0]?.displayMessage)
+        sendEvent(name: "lastEventDateTime", value: data[0]?.createAt)
     }
 }
 
