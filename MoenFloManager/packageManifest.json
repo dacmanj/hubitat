@@ -1,9 +1,9 @@
 {
   "packageName": "Moen FLO Device Manager",
   "author": "David Manuel",
-  "version": "1.0",
+  "version": "1.0.1",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2021-10-06",
+  "dateReleased": "2021-11-07",
   "licenseFile": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/license.txt",
   "apps": [
     {

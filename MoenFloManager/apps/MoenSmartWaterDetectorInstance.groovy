@@ -1,14 +1,14 @@
 /**
  * Moen Flo Manager for Hubitat By David Manuel
  * Licensed under CC BY 4.0 see https://creativecommons.org/licenses/by/4.0
- * Software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF 
- * ANY KIND, either express or implied. See the License for the specific language governing permissions and 
+ * Software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
  *
  *  Revision History
  *  2021-10-06    Initial Release of App - Forked standalone driver moved API and configuration to App
  *
- * 
+ *
  */
 
 definition(
@@ -37,11 +37,11 @@ def deviceSelector() {
   	dynamicPage(name: "mainPage", title: "", nextPage: 'settingsPage', install: false, uninstall: true) {
 		  section(getFormat("title", label)) {
         input(
-          name: "deviceId", 
-          type: "enum", 
-          required: true, 
-          title: "Device", 
-          multiple: false, 
+          name: "deviceId",
+          type: "enum",
+          required: true,
+          title: "Device",
+          multiple: false,
           options: deviceOptions()
         )
       }
@@ -63,14 +63,14 @@ def settingsPage() {
 		section(getFormat("title", label)) {
       paragraph("<b>Device Information</b><ul><li><b>Device Type:</b> ${state.deviceInfo?.deviceType}</li><li><b>Device Model: </b>${state.deviceInfo?.deviceModel}</li></ul>")
       input(
-        name: "pollingInterval", 
-        type: "enum", 
+        name: "pollingInterval",
+        type: "enum",
         title: "Polling Interval (in Minutes)",
         options: 5..59,
         defaultValue: 5
       )
       input (
-        name: "logEnable", 
+        name: "logEnable",
         type: "bool",
         title: "Enable Device Debug Logging",
         defaultValue: true
@@ -172,7 +172,7 @@ def createDevice() {
         String devDriver = driverMap[deviceType] ?: driverMap["puck_oem"]
         log.debug "Driver: ${devDriver}"
         Map devProps = [
-          name: (nickname), 
+          name: (nickname),
           label: (nickname),
           isComponent: true
         ]
@@ -187,7 +187,7 @@ def createDevice() {
   if (!childDevice) {
     if (logEnable) log.debug("Failed to setup device ${deviceId}")
   }
-  
+
 }
 
 
@@ -223,3 +223,8 @@ def getDevicesCache() {
   return parent.state.devicesCache
 }
 
+def getLastDeviceAlert(deviceId) {
+  def uri = "${baseUrl}/alerts?isInternalAlarm=false&deviceId=${deviceId}"
+  def response = makeAPIGet(uri, "Get Alerts")
+  return response.data.items
+}
