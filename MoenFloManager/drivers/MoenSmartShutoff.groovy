@@ -120,11 +120,6 @@ def getDeviceInfo() {
     flowrate = deviceInfo?.telemetry?.current?.gpm
     pressure = deviceInfo?.telemetry?.current?.psi
     if (parent.getUnits() == "metric") {
-/*        if (device.currentValue('psi') || device.currentValue('gpm') || device.currentValue('gpm') == 0) {
-            sendEvent(name: "gpm", value: round(flowrate, 2))
-            sendEvent(name: "psi", value: round(pressure, 2))
-        }*/
-
         flowrate = round(flowrate * 3.785411784, 2)
         pressure = round(pressure * 6.89475729, 2)
         sendEvent(name: "rate", value: flowrate, unit: "LPM")
@@ -133,11 +128,8 @@ def getDeviceInfo() {
 
     if (parent.getUnits() == "imperial"){
         flowrate = round(flowrate, 2)
-
-        sendEvent(name: "gpm", value: flowrate)
+        pressure = rount(pressure, 2)
         sendEvent(name: "rate", value: flowrate, unit: "GPM")
-
-        sendEvent(name: "pressure", value: pressure, unit: "psi")
         sendEvent(name: "psi", value: pressure)
     }
     def deviceTemperature = deviceInfo?.telemetry?.current?.tempF
