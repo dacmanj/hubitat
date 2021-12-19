@@ -9,6 +9,8 @@ Software distributed under the License is distributed on an "AS IS" BASIS, WITHO
 
 From Hubitat Package Manager, search (by keyword) for Moen FLO Device Manager to install it.
 
+The best source of support for the driver is in the Hubitat Community in this [thread](https://community.hubitat.com/t/moen-flo-virtual-device/9677).
+
 ## Usage
 - The valve capability works just like any other valve and can be opened or closed by HSM (e.g. when water is detected)
 - The mode (home, away and sleep) can be set using the device buttons or by "pushing" one of the three buttons in an automation rule. Button 1 is for "Home" mode, Button 2 is for "Away" mode, and Button 3 is for "Sleep" mode.
