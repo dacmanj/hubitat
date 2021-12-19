@@ -6,6 +6,7 @@
  * limitations under the License.
  *
  *  Revision History
+ *  2021-12-18    1.0.2 - Update to add metric support
  *  2021-10-06    Initial Release of App - Forked standalone driver moved API and configuration to App
  *
  * 
@@ -90,9 +91,18 @@ def deviceInstaller() {
     }
     section("<b>Settings</b>") {
       input(name: 'logEnable', type: "bool", title: "Enable App (and API) Debug Logging?", required: false, defaultValue: true, submitOnChange: true)
+      paragraph('Units: ' + getUnitDisplay())
       input(name: "btnLogout", type: "button", title: "Logout")
     }
   }
+}
+
+def getUnitDisplay() {
+  return state.userData?.unitSystem == "metric_kpa" ? "Metric" : "US/Imperial";
+}
+
+def getUnits() {
+  return state.userData?.unitSystem == "metric_kpa" ? "metric" : "imperial";
 }
 
 def installed() {

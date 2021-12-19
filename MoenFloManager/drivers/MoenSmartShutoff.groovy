@@ -120,13 +120,30 @@ def getDeviceInfo() {
     device.updateDataValue("deviceType", deviceInfo?.deviceType)
     device.updateDataValue("deviceModel", deviceInfo?.deviceModel)
     device.updateDataValue("firmwareVersion", deviceInfo?.fwVersion)
-    sendEvent(name: "gpm", value: round(deviceInfo?.telemetry?.current?.gpm))
-    sendEvent(name: "psi", value: round(deviceInfo?.telemetry?.current?.psi))
+    flowrate = deviceInfo?.telemetry?.current?.gpm
+    if (parent.getUnits() == "metric") {
+        if (flowrate != 0) {
+            flowrate = round(flowrate * 3.785411784, 2)
+        }
+        sendEvent(name: "lpm", value: flowrate)
+        sendEvent(name: "kpa", value: round(deviceInfo?.telemetry?.current?.psi*6.89475729, 2))
+    }
+
+    if (parent.getUnits() == "imperial" || device.currentValue('gpm')){
+        sendEvent(name: "gpm", value: round(deviceInfo?.telemetry?.current?.gpm, 2))
+        sendEvent(name: "psi", value: round(deviceInfo?.telemetry?.current?.psi, 2))
+    }
     def deviceTemperature = deviceInfo?.telemetry?.current?.tempF
     if (deviceTemperature > 150) {
         deviceTemperature = deviceTemperature / 3
     }
-    sendEvent(name: "temperature", value: deviceTemperature, unit: "F")
+    if (parent.getUnits() == "imperial") {
+        sendEvent(name: "temperature", value: deviceTemperature, unit: "F")
+    } else {
+        deviceTemperature = round(fahrenheitToCelsius(deviceTemperature), 2)
+        sendEvent(name: "temperature", value: deviceTemperature, unit: "C")
+    }
+    
     sendEvent(name: "updated", value: deviceInfo?.telemetry?.current?.updated)
     sendEvent(name: "valve", value: deviceInfo?.valve?.target)
     sendEvent(name: "rssi", value: deviceInfo?.connectivity?.rssi)

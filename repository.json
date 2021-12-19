@@ -8,7 +8,7 @@
       "name": "Moen Flo Integration",
       "category": "Integrations",
       "location": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloStandalone/packageManifest.json",
-      "description": "Hubitat Integration for the Moen Flo Smart Shutoff. This is the original single-file driver.",
+      "description": "LEGACY: Hubitat Integration for the Moen Flo Smart Shutoff. This is the original single-file driver. Updates will on be made to fix issues. New features will only be added to the Moen FLO Device Manager.",
       "tags": [
         "Water",
         "Monitoring"
@@ -19,7 +19,7 @@
       "name": "Moen FLO Device Manager",
       "category": "Integrations",
       "location": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/packageManifest.json",
-      "description": "BETA: This is a new driver that enables quick-setup and shared credentials for all your Moen FLO devices.<br>Hubitat Integration for the Moen Flo Deviecs (Smart Shutoff and Smart Shutoff Valve",
+      "description": "The device manager enables quick-setup and shared credentials for all your Moen FLO devices.<br>Hubitat Integration for the Moen Flo Devices (Smart Shutoff and Smart Shutoff Valve). See readme at https://dcmanjr.com/flo",
       "tags": [
         "Water", 
         "Monitoring"

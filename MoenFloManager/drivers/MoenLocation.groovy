@@ -29,7 +29,6 @@ metadata {
         attribute "pushed", "number"
         attribute "mode", "enum", ["home","away","sleep"]
         attribute "updated", "string"
-        attribute "totalGallonsToday", "number"
         attribute "lastEvent", "string"
         attribute "lastEventDetail", "string"
         attribute "lastEventDateTime", "string"
@@ -142,7 +141,14 @@ def getConsumption() {
   def uri = "${baseUrl}/water/consumption?startDate=${startDate}&endDate=${endDate}&locationId=${locationId}&interval=1h"
   def response = parent.makeAPIGet(uri, "Get Consumption")
   def data = response.data
-  sendEvent(name: "totalGallonsToday", value: round(data?.aggregations?.sumTotalGallonsConsumed))
+  if (parent.getUnits() == "imperial" || totalGallonsToday > 0) {
+      sendEvent(name: "totalGallonsToday", value: round(data?.aggregations?.sumTotalGallonsConsumed))
+  }
+  if (parent.getUnits() == "metric"){
+      sendEvent(name: "totalLitersToday", value: round(data?.aggregations?.sumTotalGallonsConsumed * 3.78541))
+  }
+
+  
 }
 
 def configure() {
