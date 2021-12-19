@@ -18,12 +18,12 @@ metadata {
         capability "PushableButton"
         capability "LocationMode"
         capability "Momentary"
+        capability "Polling"
 
         command "home"
         command "away"
         command "sleepMode"
         command "reset"
-        command "pollMoen"
 
         attribute "numberOfButtons", "number"
         attribute "pushed", "number"
@@ -32,6 +32,7 @@ metadata {
         attribute "lastEvent", "string"
         attribute "lastEventDetail", "string"
         attribute "lastEventDateTime", "string"
+        attribute "totalConsumptionToday", "number"
 
     }
 
@@ -48,7 +49,7 @@ def reset() {
 
 def updated() {
     configure()
-    if (state.configured) pollMoen()
+    if (state.configured) poll()
 }
 
 def installed() {
@@ -57,17 +58,17 @@ def installed() {
 }
 
 def unschedulePolling() {
-    unschedule(pollMoen)
+    unschedule(poll)
 }
 
 def schedulePolling() {
-    unschedule(pollMoen)
+    unschedule(poll)
     if (parent?.pollingInterval) {
-        schedule("0 0/${parent?.pollingInterval} * 1/1 * ? *", pollMoen)
+        schedule("0 0/${parent?.pollingInterval} * 1/1 * ? *", poll)
     }
 }
 
-def pollMoen() {
+def poll() {
     if (parent?.logEnable) log.debug("Polling Moen")
     getLocationInfo()
     getConsumption()
@@ -126,7 +127,7 @@ def getLocationInfo() {
 }
 
 def round(d, places = 2) {
-    if (d) {
+    if (d || d == 0) {
         return (d as double).round(places)
     }
     else {
@@ -141,13 +142,15 @@ def getConsumption() {
   def uri = "${baseUrl}/water/consumption?startDate=${startDate}&endDate=${endDate}&locationId=${locationId}&interval=1h"
   def response = parent.makeAPIGet(uri, "Get Consumption")
   def data = response.data
-  if (parent.getUnits() == "imperial" || totalGallonsToday > 0) {
-      sendEvent(name: "totalGallonsToday", value: round(data?.aggregations?.sumTotalGallonsConsumed))
+  def totalConsumptionToday = data?.aggregations?.sumTotalGallonsConsumed;
+  if (device.currentValue('totalGallonsToday') >=0) {
+      sendEvent(name: "totalGallonsToday", value: round(totalConsumptionToday, 2))
   }
   if (parent.getUnits() == "metric"){
-      sendEvent(name: "totalLitersToday", value: round(data?.aggregations?.sumTotalGallonsConsumed * 3.78541))
+      totalConsumptionToday = totalConsumptionToday * 3.78541;
   }
 
+  sendEvent(name: "totalConsumptionToday", value: round(totalConsumptionToday, 2))
   
 }
 

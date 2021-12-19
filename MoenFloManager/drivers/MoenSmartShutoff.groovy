@@ -16,17 +16,14 @@ metadata {
         capability "Valve"
         capability "TemperatureMeasurement"
         capability "SignalStrength"
+        capability "PressureMeasurement"
+        capability "LiquidFlowRate"
+        capability "Polling"
 
         command "reset"
         command "manualHealthTest"
-        command "pollMoen"
 
-        attribute "valve", "enum", ["open", "closed"]
-        attribute "temperature", "number"
-        attribute "gpm", "number"
-        attribute "psi", "number"
         attribute "updated", "string"
-        attribute "rssi", "number"
         attribute "ssid", "string"
         attribute "lastHubitatHealthtestStatus", "string"
         attribute "lastEvent", "string"
@@ -55,7 +52,7 @@ def reset() {
 
 def updated() {
     configure()
-    if (state.configured) pollMoen()
+    if (state.configured) poll()
 }
 
 def installed() {
@@ -64,17 +61,17 @@ def installed() {
 }
 
 def unschedulePolling() {
-    unschedule(pollMoen)
+    unschedule(poll)
 }
 
 def schedulePolling() {
-    unschedule(pollMoen)
+    unschedule(poll)
     if (parent?.pollingInterval) {
-        schedule("0 0/${parent?.pollingInterval} * 1/1 * ? *", pollMoen)
+        schedule("0 0/${parent?.pollingInterval} * 1/1 * ? *", poll)
     }
 }
 
-def pollMoen() {
+def poll() {
     if (parent?.logEnable) log.debug("Polling Moen")
     getDeviceInfo()
     getLastAlerts()
@@ -121,17 +118,27 @@ def getDeviceInfo() {
     device.updateDataValue("deviceModel", deviceInfo?.deviceModel)
     device.updateDataValue("firmwareVersion", deviceInfo?.fwVersion)
     flowrate = deviceInfo?.telemetry?.current?.gpm
+    pressure = deviceInfo?.telemetry?.current?.psi
     if (parent.getUnits() == "metric") {
-        if (flowrate != 0) {
-            flowrate = round(flowrate * 3.785411784, 2)
-        }
-        sendEvent(name: "lpm", value: flowrate)
-        sendEvent(name: "kpa", value: round(deviceInfo?.telemetry?.current?.psi*6.89475729, 2))
+/*        if (device.currentValue('psi') || device.currentValue('gpm') || device.currentValue('gpm') == 0) {
+            sendEvent(name: "gpm", value: round(flowrate, 2))
+            sendEvent(name: "psi", value: round(pressure, 2))
+        }*/
+
+        flowrate = round(flowrate * 3.785411784, 2)
+        pressure = round(pressure * 6.89475729, 2)
+        sendEvent(name: "rate", value: flowrate, unit: "LPM")
+        sendEvent(name: "pressure", value: pressure, unit: "kPa")
     }
 
-    if (parent.getUnits() == "imperial" || device.currentValue('gpm')){
-        sendEvent(name: "gpm", value: round(deviceInfo?.telemetry?.current?.gpm, 2))
-        sendEvent(name: "psi", value: round(deviceInfo?.telemetry?.current?.psi, 2))
+    if (parent.getUnits() == "imperial"){
+        flowrate = round(flowrate, 2)
+
+        sendEvent(name: "gpm", value: flowrate)
+        sendEvent(name: "rate", value: flowrate, unit: "GPM")
+
+        sendEvent(name: "pressure", value: pressure, unit: "psi")
+        sendEvent(name: "psi", value: pressure)
     }
     def deviceTemperature = deviceInfo?.telemetry?.current?.tempF
     if (deviceTemperature > 150) {
@@ -169,7 +176,7 @@ def getLastAlerts() {
 }
 
 def round(d, places = 2) {
-    if (d) {
+    if (d || d == 0) {
         return (d as double).round(places)
     }
     else {
