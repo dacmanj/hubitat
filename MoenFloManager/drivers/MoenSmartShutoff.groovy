@@ -128,9 +128,9 @@ def getDeviceInfo() {
 
     if (parent.getUnits() == "imperial"){
         flowrate = round(flowrate, 2)
-        pressure = rount(pressure, 2)
+        pressure = round(pressure, 2)
         sendEvent(name: "rate", value: flowrate, unit: "GPM")
-        sendEvent(name: "psi", value: pressure)
+        sendEvent(name: "pressure", value: pressure)
     }
     def deviceTemperature = deviceInfo?.telemetry?.current?.tempF
     if (deviceTemperature > 150) {
