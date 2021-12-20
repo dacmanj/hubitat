@@ -61,7 +61,7 @@ def installed() {
 }
 
 def unschedulePolling() {
-    unschedule(poll)
+    unschedule()
 }
 
 def schedulePolling() {

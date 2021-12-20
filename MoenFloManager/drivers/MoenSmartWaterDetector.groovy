@@ -52,11 +52,11 @@ def installed() {
 }
 
 def unschedulePolling() {
-    unschedule(poll)
+    unschedule()
 }
 
 def schedulePolling() {
-    unschedule(poll)
+    unschedule()
     if (parent?.pollingInterval) {
         schedule("0 0/${parent?.pollingInterval} * 1/1 * ? *", pollMoen)
     }
