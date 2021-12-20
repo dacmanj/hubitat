@@ -19,8 +19,7 @@ metadata {
         capability "TemperatureMeasurement"
         capability "WaterSensor"
         capability "Battery"
-
-        command "pollMoen"
+        capability "Polling"
 
         attribute "temperature", "number"
         attribute "humidity", "number"
@@ -44,7 +43,7 @@ def logout() {
 
 def updated() {
     configure()
-    if (state.configured) pollMoen()
+    if (state.configured) poll()
 }
 
 def installed() {
@@ -53,17 +52,17 @@ def installed() {
 }
 
 def unschedulePolling() {
-    unschedule(pollMoen)
+    unschedule(poll)
 }
 
 def schedulePolling() {
-    unschedule(pollMoen)
+    unschedule(poll)
     if (parent?.pollingInterval) {
         schedule("0 0/${parent?.pollingInterval} * 1/1 * ? *", pollMoen)
     }
 }
 
-def pollMoen() {
+def poll() {
     if (logEnable) log.debug("Polling Moen")
     getDeviceInfo()
     getLastAlerts()
