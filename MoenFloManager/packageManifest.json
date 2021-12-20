@@ -4,6 +4,9 @@
   "version": "1.0.2",
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2021-12-18",
+  "releaseNotes": "See release notes at https://github.com/dacmanj/hubitat/tree/main/MoenFloManager#readme",
+  "communityLink": "https://community.hubitat.com/t/moen-flo-virtual-device/9677",
+  "documentationLink": "https://github.com/dacmanj/hubitat/tree/main/MoenFloManager#readme",
   "licenseFile": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/license.txt",
   "apps": [
     {

@@ -1,5 +1,5 @@
 # Moen Flo for Hubitat
-
+THIS IS THE OLD DRIVER -- if you're setting up a new device the [Moen FLO Device Manager](https://github.com/dacmanj/hubitat/tree/main/MoenFloManager) is all you need.
 ## License
 Moen Flo for Hubitat by David Manuel is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0).
 Software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.

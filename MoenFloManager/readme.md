@@ -7,7 +7,7 @@ Software distributed under the License is distributed on an "AS IS" BASIS, WITHO
 ## Installation
 [Hubitat Package Manager](https://github.com/dcmeglio/hubitat-packagemanager) is recommended for installing the App.
 
-From Hubitat Package Manager, search (by keyword) for Moen FLO Device Manager to install it.
+When selecting the package to install either search by keyword for "Moen FLO" and selecting "Moen FLO Device Manager by David Manuel." You can also use "From a URL" and provide the manifest url directly (https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/packageManifest.json).
 
 The best source of support for the driver is in the Hubitat Community in this [thread](https://community.hubitat.com/t/moen-flo-virtual-device/9677).
 
