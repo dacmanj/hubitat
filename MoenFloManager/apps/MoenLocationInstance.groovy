@@ -3,12 +3,7 @@
  * Licensed under CC BY 4.0 see https://creativecommons.org/licenses/by/4.0
  * Software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF 
  * ANY KIND, either express or implied. See the License for the specific language governing permissions and 
- * limitations under the License.
- *
- *  Revision History
- *  2021-10-06    Initial Release of App - Forked standalone driver moved API and configuration to App
- *
- * 
+ * limitations under the License. 
  */
 
 definition(
