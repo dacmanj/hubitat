@@ -5,7 +5,7 @@
   "packages": [
     {
       "id": "0bd3c02f-347f-4395-9b5d-431b918a2c8a",
-      "name": "Moen Flo Integration",
+      "name": "Moen Flo Smart Shutoff",
       "category": "Integrations",
       "location": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloStandalone/packageManifest.json",
       "description": "LEGACY: Hubitat Integration for the Moen Flo Smart Shutoff. This is the original single-file driver. Updates will on be made to fix issues. New features will only be added to the Moen FLO Device Manager.",

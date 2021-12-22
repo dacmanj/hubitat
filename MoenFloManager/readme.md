@@ -6,7 +6,7 @@ Software distributed under the License is distributed on an "AS IS" BASIS, WITHO
 
 ## Release Notes
  *  2021-12-18  v1.0.2  Add metric support
- *  2021-10-06  v1.0.1  Initial Release of App - Forked standalone driver moved API and configuration to App
+ *  2021-10-06  v1.0.1  Initial Release of App - Forked standalone driver moved API and configuration to App, add multi-location support, merge in smart water detector code from [jlaughter](https://github.com/jlaughter)
 
 ## Installation
 [Hubitat Package Manager](https://github.com/dcmeglio/hubitat-packagemanager) is recommended for installing the App.
