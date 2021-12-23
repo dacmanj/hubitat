@@ -19,6 +19,7 @@
       "name": "Moen FLO Device Manager",
       "category": "Integrations",
       "location": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/packageManifest.json",
+      "betaLocation": "https://dcmanjr.com/moen/devpkg.json",
       "description": "The device manager enables quick-setup and shared credentials for all your Moen FLO devices.<br>Hubitat Integration for the Moen Flo Devices (Smart Shutoff and Smart Shutoff Valve). See readme at https://dcmanjr.com/flo",
       "tags": [
         "Water", 
