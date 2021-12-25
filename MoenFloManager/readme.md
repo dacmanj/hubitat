@@ -5,6 +5,7 @@ Moen FLO Device Manager by David Manuel is licensed under [CC BY 4.0](https:
 Software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
 ## Release Notes
+ *  2021-12-25  v1.0.3  Add HSM Away sync on Location; Add metric support to water detector; updates for clarity on device manager
  *  2021-12-18  v1.0.2  Add metric support
  *  2021-10-06  v1.0.1  Initial Release of App - Forked standalone driver moved API and configuration to App, add multi-location support, merge in smart water detector code from [jlaughter](https://github.com/jlaughter)
 

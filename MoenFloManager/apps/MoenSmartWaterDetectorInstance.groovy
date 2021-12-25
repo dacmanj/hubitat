@@ -201,6 +201,9 @@ def makeAPIPost(uri, body, requestType, successStatus = [200, 202]) {
   return parent.makeAPIPost(uri, body, requestType, successStatus)
 }
 
+def getUnits() {
+  return parent.getUnits()
+}
 
 def getLocationsCache() {
   return parent.state.locationsCache

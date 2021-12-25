@@ -76,6 +76,12 @@ def settingsPage() {
         type: "number",
         title: "Revert Time in Minutes (after Sleep)", 
         defaultValue: 120)
+      input(
+        name: "subscribeHSMAway", 
+        type: "bool",
+        title: "Set Location to Away when HSM Armed Away?",
+        defaultValue: false
+      )
       input (
         name: "logEnable", 
         type: "bool",
@@ -121,6 +127,24 @@ def updated() {
   }
   if (logEnable) runIn(1800,logsOff)
 	unsubscribe()
+  if (subscribeHSMAway) {
+      subscribe (location, "hsmStatus", handleHSMStatusUpdate)
+  }
+}
+
+def handleHSMStatusUpdate(evt) {
+  if (logEnabled) {
+    log.info "HSM Alert: $evt.value"
+  }
+  if (subscribeHSMAway) {
+    switch (evt.value){
+      case "armedAway":
+        getChildDevices().collect { it.away() }
+      break 
+      default:
+        getChildDevices().collect { it.home() }
+    }
+  }
 }
 
 def logsOff() {
