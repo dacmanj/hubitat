@@ -79,7 +79,7 @@ def settingsPage() {
       input(
         name: "subscribeHSMAway", 
         type: "bool",
-        title: "Set Location to Away when HSM Armed Away?",
+        title: "Set this FLO Location to Away when Hubitat Safety Montor set to Armed Away (and revert to home when HSM not away)?",
         defaultValue: false
       )
       input (
