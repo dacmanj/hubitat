@@ -124,7 +124,7 @@ def updated() {
 }
 
 def logsOff() {
-  logEnable = false
+  app.updateSetting("logEnable", false)
 }
 
 def initialize() {
