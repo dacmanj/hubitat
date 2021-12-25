@@ -30,8 +30,10 @@ If you do not already have it:
 * [Hubitat Package Manager](https://github.com/dcmeglio/hubitat-packagemanager)
 
 paste the app into the app code and hit save. then go to apps, user apps then add package manager. 
-
 ## License
-Flo by Moen Device Manager for Hubitat by David Manuel is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0).
+Moen FLO Device Manager by David Manuel is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0).
 Software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
+This project is not affiliated with, endorsed or sponsored by Moen Inc nor Flo Technologies, Inc. 
+
+All trademarks are reserved to their respective owners.
