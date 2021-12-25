@@ -82,12 +82,17 @@ def deviceInstaller() {
       app(name: "waterDetectorApps", appName: appMap["puck_oem"], namespace: "dacmanj", title: "<b>Add Water Detector</b>", multiple: true)
     }
     section("<h3>Locations</h3>") {
+      paragraph("<i>Locations are virtual devices representing each location in the Moen Flo app and are used to set/see presence mode (home, away, sleep) and consumption.</i>")
       app(name: "locationApps", appName: appMap["location"], namespace: "dacmanj", title: "<b>Add Location</b>", multiple: true)
     }
     section("<b>Settings</b>") {
       input(name: 'logEnable', type: "bool", title: "Enable App (and API) Debug Logging?", required: false, defaultValue: true, submitOnChange: true)
-      paragraph('Units: ' + getUnitDisplay())
+      paragraph('Units: ' + getUnitDisplay() + ' (to change units -- update your settings in the Moen Flo App')
       input(name: "btnLogout", type: "button", title: "Logout")
+    }
+    section("<b>Resources</b>") {
+      paragraph("<ul><li><a href='https://github.com/dacmanj/hubitat/tree/main/MoenFloManager#readme'>Documentation/README</a></li><li><a href='https://community.hubitat.com/t/moen-flo-virtual-device/9677'>Community Support</a></li></ul>")
+
     }
   }
 }
@@ -107,11 +112,20 @@ def installed() {
 
 def updated() {
   log.debug "updated"
+  setChildLogEnable(logEnable)
   initialize()
 }
 
 def logsOff() {
-  logEnable = false
+  app.updateSetting("logEnable", false)
+  setChildLogEnable(false)
+}
+
+def setChildLogEnable(logEnable) {
+  childApps.each { child ->
+    log.info "Updating child app ${child.label} to ${logEnable}"
+    child.updateSetting("logEnable", logEnable)
+  }
 }
 
 def initialize() {

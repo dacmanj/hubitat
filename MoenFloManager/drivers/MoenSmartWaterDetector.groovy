@@ -15,13 +15,9 @@ metadata {
         capability "WaterSensor"
         capability "Battery"
         capability "Polling"
+        capability "SignalStrength"
 
-        attribute "temperature", "number"
-        attribute "humidity", "number"
-        attribute "battery", "number"
-        attribute "water", "enum", ["wet", "dry"]
         attribute "updated", "string"
-        attribute "rssi", "number"
         attribute "ssid", "string"
         attribute "lastEvent", "string"
         attribute "lastEventDetail", "string"
@@ -53,7 +49,7 @@ def unschedulePolling() {
 def schedulePolling() {
     unschedule()
     if (parent?.pollingInterval) {
-        schedule("0 0/${parent?.pollingInterval} * 1/1 * ? *", pollMoen)
+        schedule("0 0/${parent?.pollingInterval} * 1/1 * ? *", poll)
     }
 }
 
@@ -78,8 +74,15 @@ def getDeviceInfo() {
     device.updateDataValue("deviceModel", deviceInfo?.deviceModel)
     device.updateDataValue("firmwareVersion", deviceInfo?.fwVersion)
 
-    sendEvent(name: "temperature", value: round(deviceInfo?.telemetry?.current?.tempF, 0), unit: "F")
-    sendEvent(name: "humidity", value: round(deviceInfo?.telemetry?.current?.humidity, 0), unit: "%")
+
+    def deviceTemperature = deviceInfo?.telemetry?.current?.tempF
+    if (parent.getUnits() == "imperial") {
+        sendEvent(name: "temperature", value: round(deviceTemperature, 2), unit: "F")
+    } else {
+        deviceTemperature = round(fahrenheitToCelsius(deviceTemperature), 2)
+        sendEvent(name: "temperature", value: deviceTemperature, unit: "C")
+    }
+    sendEvent(name: "humidity", value: round(deviceInfo?.telemetry?.current?.humidity, 0), unit: "%rh")
     sendEvent(name: "battery", value: round(deviceInfo?.battery?.level, 0), unit: "%")
     def water_state = deviceInfo?.fwProperties?.telemetry_water
     def WATER_STATES = [1: "wet", 2: "dry"]
