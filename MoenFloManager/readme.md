@@ -1,5 +1,5 @@
 # Moen FLO Device Manager
-This [Hubitat](https://hubitat.com/) app includes drivers for the Moen Flo Smart Shutoff valve and Smart Water Detector.
+This [Hubitat](https://hubitat.com/) app includes drivers for the [Moen Flo Smart Shutoff valve and Smart Water Detector](https://meetflo.com/).
 
 ## Installation
 [Hubitat Package Manager](https://github.com/dcmeglio/hubitat-packagemanager) is recommended for installing the App.
