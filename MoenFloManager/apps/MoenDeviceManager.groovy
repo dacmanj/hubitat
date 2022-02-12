@@ -222,6 +222,10 @@ def authenticate() {
 }
 
 def getUserInfo() {
+  if (!state.authenticated) {
+      log.info "Skipped Get User Info: Not Logged In"
+      return
+  }
   def userId = state.userId
   def uri = "${baseUrl}/users/${userId}?expand=locations,alarmSettings"
   def response = makeAPIGet(uri, "Get User Info")
@@ -229,6 +233,10 @@ def getUserInfo() {
 }
 
 def discoverDevices() {
+  if (!state.authenticated) {
+      log.info "Skipped Get User Info: Not Logged In"
+      return
+  }
   def locations = []
   Map devicesCache = [:]
   Map locationsCache = [:]
@@ -428,8 +436,6 @@ void appButtonHandler(btn) {
       logout()
       break
     case "btnLogin":
-      authenticate()
-      discoverDevices()
       deviceInstaller()
       break
     case "btnSetupAllDevices":
