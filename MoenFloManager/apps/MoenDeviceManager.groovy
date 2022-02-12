@@ -53,6 +53,11 @@ def loginPage() {
         return deviceInstaller()
     }
     dynamicPage(name: "mainPage", title: "Manage Your Moen Flo Devices", install: false, uninstall: true) {
+        if (state.authenticationFailures > 0) {
+            section("<b style='color:red'>Errors</b>") {
+                paragraph("<p style='color:red'>Invalid credentials. Please check your password and try again.</p>")
+            }
+        }
         section("<b>Credentials<b>") {
             preferences {        
               input(name: "username", type: "string", title:"User Name", description: "User Name", required: true, displayDuringSetup: true)
@@ -123,7 +128,7 @@ def logsOff() {
 
 def setChildLogEnable(logEnable) {
   childApps.each { child ->
-    log.info "Updating child app ${child.label} to ${logEnable}"
+    log.info "Updating child app ${child.label} logEnable to ${logEnable}"
     child.updateSetting("logEnable", logEnable)
   }
 }
@@ -133,15 +138,18 @@ def initialize() {
   if (!state.authenticated) {
     authenticate()
   }
-  if (state.token) {
+  if (state.authenticated) {
     getUserInfo()
     discoverDevices()
+  } else {
+    log.info "Not logged in. Skipping load of user and device data"
   }
   if (logEnable) {
     log.info "There are ${childApps.size()} child apps"
     childApps.each { child ->
-      log.info "Child app: ${child.label}"
-      log.info "Child app: ${child.id}"
+      device_id = child.getAllChildDevices().collect { it.id }.join(", ")
+      device_label = child.getAllChildDevices().collect { it.label }.join(", ")
+      log.info "Child app: ${child.label} (${child.id}) --- Device: ${device_label} (${device_id})"
     }
   }
   unschedule()
@@ -149,12 +157,11 @@ def initialize() {
 }
 
 def logout() {
-  state.token = null
+  state.clear()
   state.authenticated = false
   state.authenticationFailures = 0
-  state.devicesCache = null
-  state.locationsCache = null
-  state.userData = null
+  app.removeSetting("username")
+  app.removeSetting("password")
   log.debug "logout()"
   loginPage()
 }
@@ -176,10 +183,10 @@ def authenticate() {
     if (logEnable) log.debug("failure count: ${state.authenticationFailures}")
     def uri = authUrl
     if (!password) {
-        log.error("Login Failed: No password")
+        log.info("Login Skipped: No password")
     }
     else {
-        if (state.authenticationFailures > 3) {
+        if (state.authenticationFailures >= 3) {
             log.error("Failed to authenticate after three tries. Giving up. Log out and back in to retry.")
         }
         
@@ -200,7 +207,7 @@ def authenticate() {
                     else {
                         log.error "Login Failed: (${response.status}) ${response.data}"
                         state.authenticated = false
-                        state.authentcationFailures += 1
+                        state.authenticationFailures = (state.authenticationFailures >=0 ? state.authenticationFailures + 1 : 0)
                     }
               }
         }
@@ -208,8 +215,9 @@ def authenticate() {
             log.error "Login exception: ${e}"
             log.error "Login Failed: Please confirm your Flo Credentials"
             state.authenticated = false
-            state.authentcationFailures += 1
+            state.authenticationFailures = (state.authenticationFailures >=0 ? state.authenticationFailures + 1 : 0)
         }
+        if (logEnable) log.debug("failure count: ${state.authenticationFailures}")
     }
 }
 

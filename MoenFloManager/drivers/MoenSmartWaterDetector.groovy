@@ -56,7 +56,6 @@ def schedulePolling() {
 def poll() {
     if (logEnable) log.debug("Polling Moen")
     getDeviceInfo()
-    getLastAlerts()
 }
 
 def getDeviceInfo() {
@@ -94,17 +93,6 @@ def getDeviceInfo() {
     sendEvent(name: "ssid", value: deviceInfo?.fwProperties?.wifi_sta_ssid)
 
 
-}
-
-
-def getLastAlerts() {
-    def deviceId = device.getDataValue("deviceId")
-    def data = parent.getLastDeviceAlert(deviceId)
-    if (data) {
-        sendEvent(name: "lastEvent", value: data[0]?.displayTitle)
-        sendEvent(name: "lastEventDetail", value: data[0]?.displayMessage)
-        sendEvent(name: "lastEventDateTime", value: data[0]?.createAt)
-    }
 }
 
 def round(d, places = 2) {

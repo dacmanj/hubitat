@@ -220,9 +220,3 @@ def getDeviceData(deviceId) {
 def getDevicesCache() {
   return parent.state.devicesCache
 }
-
-def getLastDeviceAlert(deviceId) {
-  def uri = "${baseUrl}/alerts?isInternalAlarm=false&deviceId=${deviceId}"
-  def response = makeAPIGet(uri, "Get Alerts")
-  return response?.data?.items
-}
