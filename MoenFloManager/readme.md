@@ -41,6 +41,12 @@ This project is not affiliated with, endorsed or sponsored by Moen Inc nor Flo T
 
 All trademarks are reserved to their respective owners.
 ## Release Notes
+- 2022-02-12 - v1.0.4
+    - Better handling of invalid credentials / login error
+    - Better logging for initial setup
+    - Fix state/credential handling in logout
+    - Remove last alert api call from smart detector
+
 - 2021-12-25 - v1.0.3  
     - Add HSM Away sync on Location
     - Add metric support to water detector
