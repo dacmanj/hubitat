@@ -184,6 +184,7 @@ def authenticate() {
     def uri = authUrl
     if (!password) {
         log.info("Login Skipped: No password")
+        state.authenticationFailures = 99
     }
     else {
         if (state.authenticationFailures >= 3) {
@@ -276,6 +277,14 @@ def getDeviceData(deviceId) {
 
 def makeAPIGet(uri, request_type, success_status = [200, 202]) {
     if (logEnable) log.debug "makeAPIGet: ${request_type} ${uri}"
+    if (!settings.password) {
+        log.error("User is Logged out. Return to the Moen Flo Manager App and login again to resume updates.");
+        return {}
+    }
+    if (state.authenticationFailures >= 3) {
+        log.error("Too many authentication failures to continue. Logout in the App and Log back in");
+        return {}
+    }
     def token = state.token
     if (!token || token == "") authenticate();
     def response = [:];
@@ -315,7 +324,15 @@ def makeAPIGet(uri, request_type, success_status = [200, 202]) {
 }
 
 def makeAPIPost(uri, body, request_type, success_status = [200, 202]) {
-    if (logEnable) log.debug "makeAPIGet: ${request_type} ${uri}"
+    if (logEnable) log.debug "makeAPIPost: ${request_type} ${uri}"
+    if (!settings.password) {
+        log.error("User is Logged out. Return to the Moen Flo Manager App and login again to resume updates.");
+        return {}
+    }
+    if (state.authenticationFailures >= 3) {
+        log.error("Too many authentication failures to continue. Logout in the App and Log back in");
+        return {}
+    }
     def token = state.token
     if (!token || token == "") authenticate();
     def response = [:];
