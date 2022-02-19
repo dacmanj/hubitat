@@ -80,7 +80,7 @@ def update_latest_version(id, source_path, type):
         status_code = result[1].status_code
         result_json = result[0]
         new_version = result_json.get('version')
-        status = result_json.get('status')
+        status = f"{result_json['status']}: {result_json['errorMessage']}" if result_json.get('status') == 'error' else result_json['status']
         print(f"Update of {type.title()} {display_id_name} v{new_version} {status_code}: {status}")
         return result
 
