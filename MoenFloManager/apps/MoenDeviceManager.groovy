@@ -281,8 +281,11 @@ def getDeviceData(deviceId) {
 }
 
 def checkTokenLife() {
-    remainingMinutes = (int)((new Date(state.tokenExpiration).getTime() - new Date().getTime())/1000/60)
-    if (logEnable) log.info "moen token life remaining: ${remainingMinutes} minutes"
+    if state.tokenExpiration:
+        remainingMinutes = (int)((new Date(state.tokenExpiration).getTime() - new Date().getTime())/1000/60)
+        if (logEnable) log.info "moen token life remaining: ${remainingMinutes} minutes"
+    else:
+        remainingMinutes = 0
     if (remainingMinutes < 60) {
         authenticate()
     }
@@ -290,8 +293,8 @@ def checkTokenLife() {
 }
 
 def makeAPIGet(uri, request_type, success_status = [200, 202]) {
-    if (logEnable) log.debug "makeAPIGet: ${request_type} ${uri}"
     checkTokenLife()
+    if (logEnable) log.debug "makeAPIGet: ${request_type} ${uri}"
 
     if (!settings.password) {
         log.error("User is Logged out. Return to the Moen Flo Manager App and login again to resume updates.");
@@ -301,8 +304,6 @@ def makeAPIGet(uri, request_type, success_status = [200, 202]) {
         log.error("Too many authentication failures to continue. Logout in the App and Log back in");
         return {}
     }
-    def token = state.token
-    if (!token || token == "") authenticate();
     def response = [:];
     int max_tries = 2;
     int tries = 0;
@@ -329,9 +330,7 @@ def makeAPIGet(uri, request_type, success_status = [200, 202]) {
             } else {
                 log.error "${request_type} Failed ${e}"
             }
-            state.token = null
             authenticate()
-
         }
         tries++
 
@@ -350,8 +349,6 @@ def makeAPIPost(uri, body, request_type, success_status = [200, 202]) {
         log.error("Too many authentication failures to continue. Logout in the App and Log back in");
         return {}
     }
-    def token = state.token
-    if (!token || token == "") authenticate();
     def response = [:];
     int max_tries = 2;
     int tries = 0;
