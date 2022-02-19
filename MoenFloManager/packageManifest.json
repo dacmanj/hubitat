@@ -1,9 +1,9 @@
 {
   "packageName": "Moen FLO Device Manager",
   "author": "David Manuel",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2022-02-12",
+  "dateReleased": "2022-02-19",
   "releaseNotes": "See release notes at https://github.com/dacmanj/hubitat/tree/main/MoenFloManager#release-notes",
   "communityLink": "https://community.hubitat.com/t/moen-flo-virtual-device/9677",
   "documentationLink": "https://github.com/dacmanj/hubitat/tree/main/MoenFloManager#readme",

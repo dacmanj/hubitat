@@ -66,8 +66,7 @@ def getDeviceInfo() {
     device.updateDataValue("locationNickname", location?.nickname)
     device.updateDataValue("locationAddress", location?.address)
     device.updateDataValue("deviceId", deviceInfo?.id)
-    device.updateDataValue("locationId", deviceInfo?.location.id)
-
+    device.updateDataValue("locationId", deviceInfo?.location?.id)
     device.updateDataValue("deviceNickname", deviceInfo?.nickname)
     device.updateDataValue("deviceType", deviceInfo?.deviceType)
     device.updateDataValue("deviceModel", deviceInfo?.deviceModel)

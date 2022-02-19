@@ -92,6 +92,7 @@ def deviceInstaller() {
     }
     section("<b>Settings</b>") {
       input(name: 'logEnable', type: "bool", title: "Enable App (and API) Debug Logging?", required: false, defaultValue: true, submitOnChange: true)
+      input(name: 'logAutoTimeOut', type: "bool", title: "Automatically cancel logging afer 30 minutes?", required: false, defaultValue: true, submitOnChange: true)
       paragraph('Units: ' + getUnitDisplay() + ' (to change units -- update your settings in the Moen Flo App')
       input(name: "btnLogout", type: "button", title: "Logout")
     }
@@ -153,7 +154,9 @@ def initialize() {
     }
   }
   unschedule()
-  runIn(1800, logsOff)
+  if(logAutoTimeOut) {
+      runIn(1800, logsOff)
+  }
 }
 
 def logout() {
