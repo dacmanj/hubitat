@@ -10,7 +10,7 @@ class CodeType(Enum):
     DRIVER = "driver"
 
 """WARNING!!! You must update these ids and set put hubitat ip address in a .env file to use this"""
-targets = {
+TARGETS = {
     "MoenFloManager": {
         "apps": [
             {"id": 827, "source_path": "MoenFloManager/apps/MoenDeviceManager.groovy"},
@@ -31,14 +31,22 @@ base_url = f"http://{ip}"
 
 
 def update_package(target_name, apps=True, drivers=True):
-    target = targets.get(target_name)
+    return do_on_package(update_latest_version, target_name, apps, drivers)
+
+
+def retrieve_package(target_name, apps=True, drivers=True):
+    return do_on_package(retrieve_latest_source, target_name, apps, drivers)
+
+
+def do_on_package(op_func, target_name, apps=True, drivers=True):
+    target = TARGETS.get(target_name)
     if apps:
         for app in target.get("apps"):
-            update_latest_version(app['id'], app['source_path'], CodeType.APP.value)
+            op_func(app['id'], app['source_path'], CodeType.APP.value)
 
     if drivers:
         for driver in target.get('drivers'):
-            update_latest_version(driver['id'], driver['source_path'], CodeType.DRIVER.value)
+            op_func(driver['id'], driver['source_path'], CodeType.DRIVER.value)
 
 
 def update_latest_version(id, source_path, type):
@@ -60,9 +68,28 @@ def update_latest_version(id, source_path, type):
         return result
 
 
+def retrieve_latest_source(id, source_path, type):
+    info = get_info(id, type)[0]
+    current_version = info.get('version')
+    name = info.get('name')
+    display_id_name = ' '.join([str(x) for x in [id, name] if x])
+    source = get_source(source_path)
+    if source == info.get('source'):
+        print(f"{type.title()} {display_id_name} v{current_version} is the same as {source_path}: SKIPPED")
+    else:
+        print(f"Updating {source_path} with {type.title()} {display_id_name} v{current_version} fom Hubitat")
+        save_source(source_path, info.get('source'))
+
+
 def get_source(source_path):
     with open(source_path) as f:
         source_code = f.read()
+    return source_code
+
+
+def save_source(source_path, source):
+    with open(source_path, "w") as f:
+        source_code = f.write(source)
     return source_code
 
 
@@ -82,14 +109,16 @@ def get_info(id, type):
     r = requests.get(url)
     return r.json(), r
 
+
 if len(sys.argv) > 1:
-    target = sys.argv[1]
+    package_name = sys.argv[1]
 else:
-    target = os.getenv('TARGET')
+    package_name = os.getenv('TARGET')
 
 if __name__ == "__main__":
-    if not target:
+    if not package_name:
         print("Warning! you must update the app id/driver ids to match your device.")
-        update_package('MoenFloManager')
+        # update_package('MoenFloManager')
+        retrieve_package('MoenFloManager')
     else:
-        update_package(target)
+        update_package(package_name)
