@@ -41,7 +41,7 @@ TARGETS = {
     }
 }
 
-ip = os.getenv('hubitat')
+ip = os.getenv('HUBITAT')
 base_url = f"http://{ip}"
 
 
