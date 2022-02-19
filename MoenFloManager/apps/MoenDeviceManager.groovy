@@ -281,11 +281,13 @@ def getDeviceData(deviceId) {
 }
 
 def checkTokenLife() {
-    if state.tokenExpiration:
+    if (state.tokenExpiration){
         remainingMinutes = (int)((new Date(state.tokenExpiration).getTime() - new Date().getTime())/1000/60)
         if (logEnable) log.info "moen token life remaining: ${remainingMinutes} minutes"
-    else:
+    }
+    else {
         remainingMinutes = 0
+    }
     if (remainingMinutes < 60) {
         authenticate()
     }
@@ -469,6 +471,8 @@ void appButtonHandler(btn) {
     case "btnLogin":
       deviceInstaller()
       break
+    case "btnInvalidToken":
+      state.token = '12312341234'
     case "btnSetupAllDevices":
       setupAllDevices()
       break
