@@ -42,10 +42,12 @@ This project is not affiliated with, endorsed or sponsored by Moen Inc nor Flo T
 All trademarks are reserved to their respective owners.
 ## Release Notes
 
-- 2022-02-12 - v1.0.4
+- 2022-02-19 - v1.0.5/6
   - Add null safe operator to device cache location ids to prevent null errors
   - Add option to keep log on always
   - Add python CI tool to repo
+  - Add pre-emptive refresh of access token
+  
 - 2022-02-12 - v1.0.4
   - Better handling of invalid credentials / login error
   - Better logging for initial setup

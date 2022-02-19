@@ -205,6 +205,8 @@ def authenticate() {
                         msg = "Success"
                         state.token = response.data.token
                         state.userId = response.data.tokenPayload.user.user_id
+                        state.tokenExpiration = ((long)response.data.timeNow + (long)response.data.tokenExpiration)*1000
+                        state.tokenExpirationDate = new Date(((long)response.data.timeNow + (long)response.data.tokenExpiration)*1000).toString()
                         state.authenticated = true
                         state.authenticationFailures = 0
                     }
@@ -278,8 +280,19 @@ def getDeviceData(deviceId) {
   return response.data
 }
 
+def checkTokenLife() {
+    remainingMinutes = (int)((new Date(state.tokenExpiration).getTime() - new Date().getTime())/1000/60)
+    if (logEnable) log.info "moen token life remaining: ${remainingMinutes} minutes"
+    if (remainingMinutes < 60) {
+        authenticate()
+    }
+    return remainingMinutes
+}
+
 def makeAPIGet(uri, request_type, success_status = [200, 202]) {
     if (logEnable) log.debug "makeAPIGet: ${request_type} ${uri}"
+    checkTokenLife()
+
     if (!settings.password) {
         log.error("User is Logged out. Return to the Moen Flo Manager App and login again to resume updates.");
         return {}
@@ -328,6 +341,7 @@ def makeAPIGet(uri, request_type, success_status = [200, 202]) {
 
 def makeAPIPost(uri, body, request_type, success_status = [200, 202]) {
     if (logEnable) log.debug "makeAPIPost: ${request_type} ${uri}"
+    checkTokenLife()
     if (!settings.password) {
         log.error("User is Logged out. Return to the Moen Flo Manager App and login again to resume updates.");
         return {}

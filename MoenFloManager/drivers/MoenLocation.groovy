@@ -117,7 +117,7 @@ def getLocationInfo() {
   device.updateDataValue("locationNickname", location?.nickname)
   device.updateDataValue("locationAddress", location?.address)
   device.updateDataValue("locationId", locationId)
-  def system_mode = location?.systemMode.target
+  def system_mode = location?.systemMode?.target
   sendEvent(name: "mode", value: system_mode)
 }
 
