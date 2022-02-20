@@ -94,7 +94,11 @@ def deviceInstaller() {
       input(name: 'logEnable', type: "bool", title: "Enable App (and API) Debug Logging?", required: false, defaultValue: true, submitOnChange: true)
       input(name: 'logAutoTimeOut', type: "bool", title: "Automatically cancel logging afer 30 minutes?", required: false, defaultValue: true, submitOnChange: true)
       paragraph('Units: ' + getUnitDisplay() + ' (to change units -- update your settings in the Moen Flo App')
-      input(name: "btnLogout", type: "button", title: "Logout")
+      input(name: "btnLogout", type: "button", title: "Logout", backgroundColor: "red", color: "white")
+    }
+    section("<b>Diagnostics</b>") {
+      input(name: "btnInvalidToken", type: "button", title: "Reset Token")
+      input(name: "btnClearCaches", type: "button", title: "Reset All Caches")
     }
     section("<b>Resources</b>") {
       paragraph("<ul><li><a href='https://github.com/dacmanj/hubitat/tree/main/MoenFloManager#readme'>Documentation/README</a></li><li><a href='https://community.hubitat.com/t/moen-flo-virtual-device/9677'>Community Support</a></li></ul>")
@@ -182,8 +186,8 @@ def getDriverMap() {
 }
 
 def authenticate() {
+    state.authenticated = false
     if (logEnable) log.debug("authenticate()")
-    if (logEnable) log.debug("failure count: ${state.authenticationFailures}")
     def uri = authUrl
     if (!password) {
         log.info("Login Skipped: No password")
@@ -225,6 +229,10 @@ def authenticate() {
         }
         if (logEnable) log.debug("failure count: ${state.authenticationFailures}")
     }
+    if (state.authenticated) {
+        if (log.info) log.debug("authentication successful")
+    }
+
 }
 
 def getUserInfo() {
@@ -235,7 +243,9 @@ def getUserInfo() {
   def userId = state.userId
   def uri = "${baseUrl}/users/${userId}?expand=locations,alarmSettings"
   def response = makeAPIGet(uri, "Get User Info")
-  state.userData = response.data
+  if (response.data) {
+    state.userData = response.data
+  }
 }
 
 def discoverDevices() {
@@ -289,6 +299,7 @@ def checkTokenLife() {
         remainingMinutes = 0
     }
     if (remainingMinutes < 60) {
+        log.debug('remaining minutes ${remainingMinutes} -- refreshing')
         authenticate()
     }
     return remainingMinutes
@@ -312,7 +323,7 @@ def makeAPIGet(uri, request_type, success_status = [200, 202]) {
     while (!response?.status && tries < max_tries) {
         def headers = [:]
         headers.put("Content-Type", "application/json")
-        headers.put("Authorization", token)
+        headers.put("Authorization", state.token)
 
         try {
             httpGet([headers: headers, uri: uri]) { resp -> def msg = ""
@@ -357,7 +368,7 @@ def makeAPIPost(uri, body, request_type, success_status = [200, 202]) {
     while (!response?.status && tries < max_tries) {
         def headers = [:]
         headers.put("Content-Type", "application/json")
-        headers.put("Authorization", token)
+        headers.put("Authorization", state.token)
 
         try {
             httpPostJson([headers: headers, uri: uri, body: body]) { resp -> def msg = ""
@@ -471,8 +482,15 @@ void appButtonHandler(btn) {
     case "btnLogin":
       deviceInstaller()
       break
+    case "btnClearCaches":
+      state.authenticated = false
+      authenticate()
+      getUserInfo()
+      discoverDevices()
+      break
     case "btnInvalidToken":
-      state.token = '12312341234'
+      state.token = '9999999999999999'
+      break
     case "btnSetupAllDevices":
       setupAllDevices()
       break
