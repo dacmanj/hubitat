@@ -299,7 +299,7 @@ def checkTokenLife() {
         remainingMinutes = 0
     }
     if (remainingMinutes < 60) {
-        log.debug('remaining minutes ${remainingMinutes} -- refreshing')
+        log.debug('Moen API Token Life Remaining Minutes only ${remainingMinutes} -- refreshing')
         authenticate()
     }
     return remainingMinutes
