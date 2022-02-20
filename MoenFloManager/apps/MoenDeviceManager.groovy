@@ -230,7 +230,7 @@ def authenticate() {
         if (logEnable) log.debug("failure count: ${state.authenticationFailures}")
     }
     if (state.authenticated) {
-        if (log.info) log.debug("authentication successful")
+        if (logEnable) log.debug("authentication successful")
     }
 
 }
