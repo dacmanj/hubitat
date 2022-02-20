@@ -94,7 +94,7 @@ def deviceInstaller() {
       input(name: 'logEnable', type: "bool", title: "Enable App (and API) Debug Logging?", required: false, defaultValue: true, submitOnChange: true)
       input(name: 'logAutoTimeOut', type: "bool", title: "Automatically cancel logging afer 30 minutes?", required: false, defaultValue: true, submitOnChange: true)
       paragraph('Units: ' + getUnitDisplay() + ' (to change units -- update your settings in the Moen Flo App')
-      input(name: "btnLogout", type: "button", title: "Logout", backgroundColor: "red", color: "white")
+      input(name: "btnLogout", type: "button", title: "Logout", backgroundColor: "#cc2d3b", color: "#ffffff")
     }
     section("<b>Diagnostics</b>") {
       input(name: "btnInvalidToken", type: "button", title: "Reset Token")
