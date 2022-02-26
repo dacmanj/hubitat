@@ -12,16 +12,14 @@ metadata {
     definition (name: "Moen FLO Location", namespace: "dacmanj", author: "David Manuel") {
         capability "PushableButton"
         capability "LocationMode"
-        capability "Momentary"
         capability "Polling"
 
         command "home"
         command "away"
         command "sleepMode"
         command "reset"
+        command "push", ["Button Number*"]
 
-        attribute "numberOfButtons", "number"
-        attribute "pushed", "number"
         attribute "mode", "enum", ["home","away","sleep"]
         attribute "updated", "string"
         attribute "lastEvent", "string"
@@ -69,10 +67,6 @@ def poll() {
     getConsumption()
 }
 
-def close() {
-    valveUpdate("closed")
-}
-
 def home() {
     setMode("home")
 }
@@ -86,7 +80,8 @@ def sleepMode() {
 }
 
 def setMode(mode) {
-    if (parent?.logEnable) log.debug "Setting Flo mode to ${mode}"
+    locationNickname = device.getDataValue("locationNickname")
+    if (parent?.logEnable) log.debug "Setting Flo ${locationNickname} mode to ${mode}"
     def locationId = device.getDataValue("locationId")
     def uri = "${baseUrl}/locations/${locationId}/systemMode"
     def body = [target:mode]
@@ -99,14 +94,20 @@ def setMode(mode) {
 }
 
 def push(btn) {
-    switch(btn) {
+    locationNickname = device.getDataValue("locationNickname")
+    if (parent?.logEnable) log.debug "${locationNickname} Button pushed: ${btn}"
+    switch(btn as Integer) {
        case 1: mode = "home"; break;
        case 2: mode = "away"; break;
        case 3: mode = "sleep"; break;
-       default: mode = "home";
     }
-    if (parent?.logEnable) log.debug "Setting Flo mode to ${mode} via button press"
-    setMode(mode)
+    if(mode) {
+        if (parent?.logEnable) log.debug "Setting Flo ${locationNickname} mode to ${mode} via button press"
+        setMode(mode)
+    }
+    else {
+        if (parent?.logEnable) log.debug "Ignoring invalid button press ${btn} sent to ${locationNickname}. Use button 1 to set to home, 2 to set to away or 3 to sleep for ${parent?.revertMinutes} minutes."
+    }
 }
 
 

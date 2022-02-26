@@ -44,6 +44,7 @@ All trademarks are reserved to their respective owners.
 
 - 2022-02-26 - v1.0.9
   - Fix quoting of template string on refresh log message (displaying ${remainingMinutes} instead of value)
+  - Update location device driver to fix PushableButton capability
 
 - 2022-02-19 - v1.0.5-8
   - Add null safe operator to device cache location ids to prevent null errors
