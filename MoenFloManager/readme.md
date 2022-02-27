@@ -41,6 +41,9 @@ This project is not affiliated with, endorsed or sponsored by Moen Inc nor Flo T
 
 All trademarks are reserved to their respective owners.
 ## Release Notes
+- 2022-02-27 - v1.0.10
+  - Add random polling start minute option in main app to reduce load on Hubitat/Moen API. Original behavior would do all updates on the hour then again each polling interval. When random start time is enabled it will pick a different starting minute per app. 
+  - Scheduled jobs are now run from the device app instance and will no longer be visible on the device page (see app settings / the gear icon on the corresponding device) 
 
 - 2022-02-26 - v1.0.9
   - Fix quoting of template string on refresh log message (displaying ${remainingMinutes} instead of value)
