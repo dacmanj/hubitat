@@ -55,17 +55,6 @@ def installed() {
     configure()
 }
 
-def unschedulePolling() {
-    unschedule()
-}
-
-def schedulePolling() {
-    unschedule(poll)
-    if (parent?.pollingInterval) {
-        schedule("0 0/${parent?.pollingInterval} * 1/1 * ? *", poll)
-    }
-}
-
 def poll() {
     if (parent?.logEnable) log.debug("Polling Moen")
     getDeviceInfo()
@@ -200,7 +189,7 @@ def manualHealthTest() {
 
 def configure() {
     getDeviceInfo()
-    schedulePolling()
+    poll()
     state.configured = true
 }
 

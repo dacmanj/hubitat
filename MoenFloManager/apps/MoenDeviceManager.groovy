@@ -92,8 +92,10 @@ def deviceInstaller() {
     }
     section("<b>Settings</b>") {
       input(name: 'logEnable', type: "bool", title: "Enable App (and API) Debug Logging?", required: false, defaultValue: true, submitOnChange: true)
+      input(name: 'randomStartMinute', type: "bool", title: "Randomize timing of polling?", required: false, defaultValue: false, submitOnChange: true)
+      paragraph("<i>(Recommended once app is setup and working -- this spreads out load on hub and Moen API otherwise polls happen every polling interval starting on the hour. To see the schedule, check the bottom of the device page.</i>")
       input(name: 'logAutoTimeOut', type: "bool", title: "Automatically cancel logging afer 30 minutes?", required: false, defaultValue: true, submitOnChange: true)
-      paragraph('Units: ' + getUnitDisplay() + ' (to change units -- update your settings in the Moen Flo App')
+      paragraph('Units: ' + getUnitDisplay() + ' (to change units -- update your settings in the Moen Flo App)')
       input(name: "btnLogout", type: "button", title: "Logout", backgroundColor: "#cc2d3b", color: "#ffffff")
     }
     section("<b>Diagnostics</b>") {
@@ -123,6 +125,7 @@ def installed() {
 def updated() {
   log.debug "updated"
   setChildLogEnable(logEnable)
+  updateApps()
   initialize()
 }
 
@@ -136,6 +139,10 @@ def setChildLogEnable(logEnable) {
     log.info "Updating child app ${child.label} logEnable to ${logEnable}"
     child.updateSetting("logEnable", logEnable)
   }
+}
+
+def updateApps() {
+    childApps.each { app -> app.updated() }
 }
 
 def initialize() {
@@ -392,6 +399,27 @@ def makeAPIPost(uri, body, request_type, success_status = [200, 202]) {
 
     }
     return response
+}
+
+def getStartMinute(startMinute=null, pollingInterval=null) {
+    pollingInterval = pollingInterval as Integer
+    if (randomStartMinute) {
+        while (!startMinute || startMinute == 0) {
+            startMinute = Math.random()*pollingInterval as Integer
+        }
+    } else {
+        startMinute = 0
+    }
+    if (logEnable) log.info("Calculated updated startMinute: ${startMinute} / interval: ${pollingInterval} Random?: ${randomStartMinute}")
+    return startMinute
+}
+
+def getCronString(startMinute=0, pollingInterval=10) {
+  startMinute = startMinute ? startMinute : "0"
+  pollingInterval = pollingInterval ? pollingInterval : "10"
+  def cronString = "0 ${startMinute}/${pollingInterval} * 1/1 * ? *"
+  if (logEnable) log.debug(cronString)
+  return cronString
 }
 
 def setupAllDevices() {

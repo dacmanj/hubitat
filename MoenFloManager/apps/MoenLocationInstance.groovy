@@ -71,10 +71,11 @@ def settingsPage() {
         options: 5..59,
         defaultValue: 5
       )
+      paragraph("<b>Polling Start Minute:</b>&nbsp;<span>${state.startMinute}</span>")
       input(
         name: "revertMinutes",
         type: "number",
-        title: "Revert Time in Minutes (after Sleep)", 
+        title: "Revert Time in Minutes (after Sleep)",
         defaultValue: 120)
       input(
         name: "subscribeHSMAway", 
@@ -115,18 +116,25 @@ def uninstalled() {
   }
 }
 
+def poll() {
+  def childDevice = getChildDevice("${locationId}-${getApp().id}")
+  if (childDevice) {
+    childDevice.poll()
+  }
+}
 
 def updated() {
-	log.info "Updated with settings: ${settings}"
+  log.info "Updated with settings: ${settings}"
   initialize()
   def childDevice = getChildDevice("${locationId}-${getApp().id}")
   if (childDevice) {
     childDevice.updated()
+    schedule(getCronString(), poll)
   } else {
     createDevice()
   }
   if (logEnable) runIn(1800,logsOff)
-	unsubscribe()
+  unsubscribe()
   if (subscribeHSMAway) {
       subscribe (location, "hsmStatus", handleHSMStatusUpdate)
   }
@@ -153,6 +161,10 @@ def logsOff() {
 
 def initialize() {
   log.info "initialize()"
+  log.debug('updating startMinute on app')
+  state.startMinute = parent.getStartMinute(state.startMinute, pollingInterval)
+  log.debug("updated startMinute on app ${state.startMinute}")
+
   if (locationId) {
     def locationsCache = parent?.state?.locationsCache
     def location = locationsCache[locationId]
@@ -229,6 +241,11 @@ def makeAPIGet(uri, requesType, success_status = [200, 202]) {
 
 def makeAPIPost(uri, body, requestType, successStatus = [200, 202]) {
   return parent.makeAPIPost(uri, body, requestType, successStatus)
+}
+
+def getCronString() {
+  log.debug("calling cronstring with ${state.startMinute} ${pollingInterval}")
+  return parent.getCronString(state.startMinute, pollingInterval)
 }
 
 def getUserData() {

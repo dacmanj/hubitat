@@ -17,6 +17,8 @@ metadata {
         capability "Polling"
         capability "SignalStrength"
 
+        command "reset"
+
         attribute "updated", "string"
         attribute "ssid", "string"
         attribute "lastEvent", "string"
@@ -26,10 +28,10 @@ metadata {
 
 }
 
-
-def logout() {
+def reset() {
     state.clear()
     unschedule()
+    configure()
 }
 
 def updated() {
@@ -40,17 +42,6 @@ def updated() {
 def installed() {
     log.debug "start device installed()"
     configure()
-}
-
-def unschedulePolling() {
-    unschedule()
-}
-
-def schedulePolling() {
-    unschedule()
-    if (parent?.pollingInterval) {
-        schedule("0 0/${parent?.pollingInterval} * 1/1 * ? *", poll)
-    }
 }
 
 def poll() {
@@ -100,6 +91,7 @@ def round(d, places = 2) {
 }
 
 def configure() {
-    schedulePolling()
+    unschedule()
+    poll()
     state.configured = true
 }

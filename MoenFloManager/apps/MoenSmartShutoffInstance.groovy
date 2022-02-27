@@ -64,6 +64,7 @@ def settingsPage() {
         options: 5..59,
         defaultValue: 5
       )
+      paragraph("<b>Polling Start Minute:</b>&nbsp;<span>${state.startMinute}</span>")
       input (
         name: "logEnable", 
         type: "bool",
@@ -97,12 +98,21 @@ def uninstalled() {
 }
 
 
+def poll() {
+  def childDevice = getChildDevice("${deviceId}-${getApp().id}")
+  if (childDevice) {
+    childDevice.poll()
+  }
+}
+
+
 def updated() {
-	log.info "Updated with settings: ${settings}"
+  log.info "Updated with settings: ${settings}"
   initialize()
   def childDevice = getChildDevice("${deviceId}-${getApp().id}")
   if (childDevice) {
     childDevice.updated()
+    schedule(getCronString(), poll)
   } else {
     createDevice()
   }
@@ -116,7 +126,8 @@ def logsOff() {
 
 def initialize() {
   log.info "initialize()"
-	def deviceInfo = parent?.state?.devicesCache[deviceId]
+  state.startMinute = parent.getStartMinute(state.startMinute, pollingInterval)
+  def deviceInfo = parent?.state?.devicesCache[deviceId]
   def locationsCache = parent?.state?.locationsCache
   def location = locationsCache[deviceInfo?.location?.id]
   def locationName = location?.nickname
@@ -197,6 +208,11 @@ def makeAPIGet(uri, requesType, success_status = [200, 202]) {
 
 def makeAPIPost(uri, body, requestType, successStatus = [200, 202]) {
   return parent.makeAPIPost(uri, body, requestType, successStatus)
+}
+
+def getCronString() {
+  log.debug("calling cronstring with ${state.startMinute} ${pollingInterval}")
+  return parent.getCronString(state.startMinute, pollingInterval)
 }
 
 def getUserData() {
