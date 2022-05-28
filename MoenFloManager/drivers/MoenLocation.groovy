@@ -46,14 +46,26 @@ def updated() {
 }
 
 def installed() {
-    log.debug "start device installed()"
+    log.debug "device installed()"
     configure()
+}
+
+def unschedulePolling() {
+    unschedule()
+}
+
+def schedulePolling() {
+    unschedule()
+    if (parent?.pollingInterval) {
+        schedule(parent.getCronString(), poll)
+    }
 }
 
 def poll() {
     if (parent?.logEnable) log.debug("Polling Moen")
     getLocationInfo()
     getConsumption()
+    parent.updateDeviceAndAppName()
 }
 
 def home() {
@@ -140,10 +152,10 @@ def getConsumption() {
 }
 
 def configure() {
-  unschedule()
   def locationId = device.deviceNetworkId.substring(0,36)
   getLocationInfo()
   sendEvent(name:"numberOfButtons", value: 3)
+  schedulePolling()
   state.configured = true
 }
 

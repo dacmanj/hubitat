@@ -55,11 +55,23 @@ def installed() {
     configure()
 }
 
+def unschedulePolling() {
+    unschedule()
+}
+
+def schedulePolling() {
+    unschedule(poll)
+    if (parent?.pollingInterval) {
+        schedule(parent.getCronString(), poll)
+    }
+}
+
 def poll() {
     if (parent?.logEnable) log.debug("Polling Moen")
     getDeviceInfo()
     getLastAlerts()
     getHealthTestInfo()
+    parent.updateDeviceAndAppName()
 }
 
 def close() {
@@ -189,7 +201,7 @@ def manualHealthTest() {
 
 def configure() {
     getDeviceInfo()
-    poll()
+    schedulePolling()
     state.configured = true
 }
 

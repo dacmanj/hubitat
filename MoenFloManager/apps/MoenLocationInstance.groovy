@@ -20,6 +20,7 @@ definition(
 import groovy.transform.Field
 @Field final String childNamespace = "dacmanj" // namespace of child device drivers
 @Field final String baseUrl = 'https://api-gw.meetflo.com/api/v2'
+@Field final String DEFAULT_NAME_TEMPLATE = '${nickname} - ${address} ${city}'
 
 preferences {
   page(name: "mainPage")
@@ -63,6 +64,12 @@ def settingsPage() {
         title: "Revert Mode (after Sleep)", 
         options: ["home","away","sleep"], 
         defaultValue: "home"
+      )
+      input (
+        name: "deviceNameTemplate", 
+        type: "text",
+        title: "Device Name Template",
+        defaultValue: DEFAULT_NAME_TEMPLATE
       )
       input(
         name: "pollingInterval", 
@@ -126,10 +133,12 @@ def poll() {
 def updated() {
   log.info "Updated with settings: ${settings}"
   initialize()
+  unschedule()
   def childDevice = getChildDevice("${locationId}-${getApp().id}")
+  def location = state.location
   if (childDevice) {
+    updateDeviceAndAppName()
     childDevice.updated()
-    schedule(getCronString(), poll)
   } else {
     createDevice()
   }
@@ -137,6 +146,28 @@ def updated() {
   unsubscribe()
   if (subscribeHSMAway) {
       subscribe (location, "hsmStatus", handleHSMStatusUpdate)
+  }
+}
+
+def deviceName() {
+  def template = deviceNameTemplate ?: DEFAULT_NAME_TEMPLATE
+  if (state.location) {
+    def binding = state.location
+    def deviceName = template.replaceAll(/\$\{(\w+)\}/) { k -> binding[k[1]] ?: k[0] }
+    return deviceName
+  }
+}
+
+def getDevice() {
+  def childDevice = getChildDevice("${deviceId}-${getApp().id}")
+  return childDevice
+}
+
+def updateDeviceAndAppName() {
+  def childDevice = getDevice()
+  if (childDevice) {
+    childDevice.setName(deviceName()) 
+    app.updateLabel(deviceName())
   }
 }
 
@@ -164,6 +195,8 @@ def initialize() {
   log.debug('updating startMinute on app')
   state.startMinute = parent.getStartMinute(state.startMinute, pollingInterval)
   log.debug("updated startMinute on app ${state.startMinute}")
+  
+
 
   if (locationId) {
     def locationsCache = parent?.state?.locationsCache
@@ -171,8 +204,7 @@ def initialize() {
     if (!location && locationId) parent.getLocationData(locationId)
     def locationName = location?.nickname
     if (location) {
-      def label = "${locationName}"
-      app.updateLabel(label)
+      updateDeviceAndAppName()
     } else {
       log.error "Invalid locationid: ${locationId}"
     }
@@ -210,7 +242,7 @@ def createDevice() {
       String devDriver = driverMap[deviceType]
       log.debug "Driver: ${devDriver}"
       Map devProps = [
-        name: (nickname), 
+        name: (deviceName()), 
         label: (nickname),
         isComponent: true
       ]

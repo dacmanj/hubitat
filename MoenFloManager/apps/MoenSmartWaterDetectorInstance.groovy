@@ -20,6 +20,7 @@ definition(
 import groovy.transform.Field
 @Field final String childNamespace = "dacmanj" // namespace of child device drivers
 @Field final String baseUrl = 'https://api-gw.meetflo.com/api/v2'
+@Field final String DEFAULT_NAME_TEMPLATE = '${location} - ${nickname} - ${type} - ${model} - fw ${fwversion}'
 
 preferences {
   page(name: "mainPage")
@@ -38,6 +39,12 @@ def deviceSelector() {
           title: "Device",
           multiple: false,
           options: deviceOptions()
+        )
+        input (
+          name: "deviceNameTemplate", 
+          type: "text",
+          title: "Device Name",
+          defaultValue: DEFAULT_NAME_TEMPLATE
         )
       }
     }
@@ -98,7 +105,7 @@ def uninstalled() {
 }
 
 def poll() {
-  def childDevice = getChildDevice("${deviceId}-${getApp().id}")
+  def childDevice = getDevice()
   if (childDevice) {
     childDevice.poll()
   }
@@ -107,15 +114,39 @@ def poll() {
 def updated() {
   log.info "Updated with settings: ${settings}"
   initialize()
-  def childDevice = getChildDevice("${deviceId}-${getApp().id}")
+  unschedule()
+  def childDevice = getDevice()
   if (childDevice) {
+    updateDeviceAndAppName()
     childDevice.updated()
-    schedule(getCronString(), poll)
   } else {
     createDevice()
   }
   if (logEnable) runIn(1800,logsOff)
 	unsubscribe()
+}
+
+def deviceName() {
+  def template = deviceNameTemplate ?: DEFAULT_NAME_TEMPLATE
+  if (state.deviceInfo && state.location){
+    def binding = state.deviceInfo?.clone()
+    binding['location'] = state.location?.nickname
+    def deviceName = template.replaceAll(/\$\{(\w+)\}/) { k -> binding[k[1]] ?: k[0] }
+    return deviceName
+  }
+}
+
+def getDevice() {
+  def childDevice = getChildDevice("${deviceId}-${getApp().id}")
+  return childDevice
+}
+
+def updateDeviceAndAppName() {
+  def childDevice = getDevice()
+  if (childDevice) {
+    childDevice.setName(deviceName()) 
+    app.updateLabel(deviceName())
+  }
 }
 
 def logsOff() {
@@ -163,8 +194,7 @@ def createDevice() {
   if (deviceId) {
     log.info "createDevice()"
     def appId = getApp().id
-    String devDNI = "${deviceId}-${appId}"
-    def childDevice = getChildDevice(devDNI)
+    def childDevice = getDevice()
     def driverMap = parent.getDriverMap()
     def deviceType = state.deviceInfo?.deviceType
     def locationId = state.deviceInfo?.location?.id
@@ -176,10 +206,11 @@ def createDevice() {
         String devDriver = driverMap[deviceType] ?: driverMap["puck_oem"]
         log.debug "Driver: ${devDriver}"
         Map devProps = [
-          name: (nickname),
+          name: (deviceName()),
           label: (nickname),
           isComponent: true
         ]
+        String devDNI = "${deviceId}-${appId}"
         childDevice = addChildDevice(childNamespace, devDriver, devDNI, devProps)
         return childDevice
       } catch (Exception ex) {
