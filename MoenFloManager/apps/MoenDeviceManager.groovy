@@ -40,8 +40,8 @@ import groovy.transform.Field
    "DEFAULT":             "Moen FLO Smart Shutoff Instance"
 ]
 
-@Field final String baseUrl = 'https://api-gw.meetflo.com/api/v2'
-@Field final String authUrl = 'https://api.meetflo.com/api/v1/users/auth'
+@Field final String BASE_URL = 'https://api-gw.meetflo.com/api/v2'
+@Field final String AUTH_URL = 'https://api.meetflo.com/api/v1/users/auth'
 
 def mainPage() {
   initialize()
@@ -68,6 +68,10 @@ def loginPage() {
     }
 }
 
+def getChildNamespace() {
+  return childNamespace
+}
+
 def deviceInstaller() {
   if (!state.authenticated) {
     return loginPage()
@@ -76,7 +80,7 @@ def deviceInstaller() {
   dynamicPage(name: "deviceInstaller", title: "Manage Your Moen Flo Devices", install: true, uninstall: true) {
     section("") {
       input(name: "btnSetupAllDevices", type: "button", title: "Setup All Devices")
-      paragraph("<i>Creates devices for all Devices that don't already have devices installed.</i>")
+      paragraph("<i>Start here. Clicking this creates devices for all Moen devices that haven't been added to Hubitat.</i>")
       paragraph(displayUnrecognizedDevices())
       paragraph("<b>Make sure to click DONE when your devices have been configured.</b>")
     }
@@ -195,7 +199,7 @@ def getDriverMap() {
 def authenticate() {
     state.authenticated = false
     if (logEnable) log.debug("authenticate()")
-    def uri = authUrl
+    def uri = AUTH_URL
     if (!password) {
         log.info("Login Skipped: No password")
         state.authenticationFailures = 99
@@ -248,7 +252,7 @@ def getUserInfo() {
       return
   }
   def userId = state.userId
-  def uri = "${baseUrl}/users/${userId}?expand=locations,alarmSettings"
+  def uri = "/users/${userId}?expand=locations,alarmSettings"
   def response = makeAPIGet(uri, "Get User Info")
   if (response.data) {
     state.userData = response.data
@@ -286,13 +290,13 @@ def discoverDevices() {
 }
 
 def getLocationData(locationId) {
-  def uri = "${baseUrl}/locations/${locationId}?expand=devices"
+  def uri = "/locations/${locationId}?expand=devices"
   def response = makeAPIGet(uri, "Get Location Info")
   return response.data
 }
 
 def getDeviceData(deviceId) {
-  def uri = "${baseUrl}/devices/${deviceId}"
+  def uri = "/devices/${deviceId}"
   def response = makeAPIGet(uri, "Get Device")
   return response.data
 }
@@ -312,8 +316,9 @@ def checkTokenLife() {
     return remainingMinutes
 }
 
-def makeAPIGet(uri, request_type, success_status = [200, 202]) {
+def makeAPIGet(uri, request_type, success_status = [200, 202], root_url = BASE_URL) {
     checkTokenLife()
+    uri = (root_url) ? root_url + uri : uri
     if (logEnable) log.debug "makeAPIGet: ${request_type} ${uri}"
 
     if (!settings.password) {
@@ -358,9 +363,10 @@ def makeAPIGet(uri, request_type, success_status = [200, 202]) {
     return response
 }
 
-def makeAPIPost(uri, body, request_type, success_status = [200, 202]) {
+def makeAPIPost(uri, body, request_type, success_status = [200, 202], root_url = BASE_URL) {
     if (logEnable) log.debug "makeAPIPost: ${request_type} ${uri}"
     checkTokenLife()
+    uri = (root_url) ? root_url + uri : uri
     if (!settings.password) {
         log.error("User is Logged out. Return to the Moen Flo Manager App and login again to resume updates.");
         return {}

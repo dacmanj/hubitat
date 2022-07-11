@@ -18,8 +18,6 @@ definition(
     iconX3Url: "")
 
 import groovy.transform.Field
-@Field final String childNamespace = "dacmanj" // namespace of child device drivers
-@Field final String baseUrl = 'https://api-gw.meetflo.com/api/v2'
 @Field final String DEFAULT_NAME_TEMPLATE = '${nickname} - ${address} ${city}'
 
 preferences {
@@ -65,12 +63,6 @@ def settingsPage() {
         options: ["home","away","sleep"], 
         defaultValue: "home"
       )
-      input (
-        name: "deviceNameTemplate", 
-        type: "text",
-        title: "Device Name Template",
-        defaultValue: DEFAULT_NAME_TEMPLATE
-      )
       input(
         name: "pollingInterval", 
         type: "enum", 
@@ -95,6 +87,12 @@ def settingsPage() {
         type: "bool",
         title: "Enable Device Debug Logging",
         defaultValue: true
+      )
+      input (
+        name: "deviceNameTemplate", 
+        type: "text",
+        title: "Device Name Template",
+        defaultValue: DEFAULT_NAME_TEMPLATE
       )
 		}
     if (getChildDevices().size() > 0) {
@@ -158,14 +156,18 @@ def deviceName() {
   }
 }
 
+def deviceDNI() {
+  return "${locationId}-${getApp().id}"
+}
+
 def getDevice() {
-  def childDevice = getChildDevice("${deviceId}-${getApp().id}")
+  def childDevice = getChildDevice(deviceDNI())
   return childDevice
 }
 
 def updateDeviceAndAppName() {
   def childDevice = getDevice()
-  if (childDevice) {
+  if (childDevice && deviceName()) {
     childDevice.setName(deviceName()) 
     app.updateLabel(deviceName())
   }
@@ -246,7 +248,7 @@ def createDevice() {
         label: (nickname),
         isComponent: true
       ]
-      childDevice = addChildDevice(childNamespace, devDriver, devDNI, devProps)
+      childDevice = addChildDevice(getParent().getChildNamespace(), devDriver, devDNI, devProps)
       return childDevice
     } catch (Exception ex) {
       log.error("Unable to create device for ${locationId}: $ex")

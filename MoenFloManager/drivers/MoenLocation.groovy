@@ -31,9 +31,6 @@ metadata {
 
 }
 
-import groovy.transform.Field
-@Field final String baseUrl = 'https://api-gw.meetflo.com/api/v2'
-
 def reset() {
     state.clear()
     unschedule()
@@ -84,7 +81,7 @@ def setMode(mode) {
     locationNickname = device.getDataValue("locationNickname")
     if (parent?.logEnable) log.debug "Setting Flo ${locationNickname} mode to ${mode}"
     def locationId = device.getDataValue("locationId")
-    def uri = "${baseUrl}/locations/${locationId}/systemMode"
+    def uri = "/locations/${locationId}/systemMode"
     def body = [target:mode]
     if (mode == "sleep") {
         body.put("revertMinutes", parent?.revertMinutes)
@@ -136,18 +133,20 @@ def getConsumption() {
   def locationId = device.getDataValue("locationId")
   def startDate = new Date().format('yyyy-MM-dd') + 'T00:00:00.000'
   def endDate = new Date().format('yyyy-MM-dd') + 'T23:59:59.999'
-  def uri = "${baseUrl}/water/consumption?startDate=${startDate}&endDate=${endDate}&locationId=${locationId}&interval=1h"
+  def uri = "/water/consumption?startDate=${startDate}&endDate=${endDate}&locationId=${locationId}&interval=1h"
+  log.debug(uri)
   def response = parent.makeAPIGet(uri, "Get Consumption")
   def data = response.data
   def totalConsumptionToday = data?.aggregations?.sumTotalGallonsConsumed;
   if (device.currentValue('totalGallonsToday') >=0) {
-      sendEvent(name: "totalGallonsToday", value: round(totalConsumptionToday, 2))
+    sendEvent(name: "totalGallonsToday", value: round(totalConsumptionToday, 2))
   }
   if (parent.getUnits() == "metric"){
-      totalConsumptionToday = totalConsumptionToday * 3.78541;
+    totalConsumptionToday = totalConsumptionToday * 3.78541;
   }
-
-  sendEvent(name: "totalConsumptionToday", value: round(totalConsumptionToday, 2))
+  if (totalConsumptionToday) {
+    sendEvent(name: "totalConsumptionToday", value: round(totalConsumptionToday, 2))
+  }
   
 }
 
