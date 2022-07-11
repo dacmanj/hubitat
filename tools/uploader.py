@@ -200,6 +200,7 @@ if __name__ == "__main__":
             print("direction upload")
             if auto_upload:
                 print("starting auto upload")
+                update_package(package_name)
                 auto_upload()
             else:
                 update_package(package_name)
