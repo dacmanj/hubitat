@@ -4,7 +4,7 @@
   "version": "1.0.12",
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2022-07-11",
-  "releaseNotes": "Reminder: Always test your devices after an upgrade (especially critical functions like opening/closing shutoff values.\nSee release notes at https://github.com/dacmanj/hubitat/tree/main/MoenFloManager#release-notes",
+  "releaseNotes": "Reminder: Always test your devices after an upgrade (especially critical functions like opening/closing shutoff values.)\n\nSee release notes at https://github.com/dacmanj/hubitat/tree/main/MoenFloManager#release-notes",
   "communityLink": "https://community.hubitat.com/t/moen-flo-virtual-device/9677",
   "documentationLink": "https://github.com/dacmanj/hubitat/tree/main/MoenFloManager#readme",
   "licenseFile": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/license.txt",
