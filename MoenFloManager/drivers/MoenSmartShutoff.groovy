@@ -32,9 +32,6 @@ metadata {
 
 }
 
-import groovy.transform.Field
-@Field final String baseUrl = 'https://api-gw.meetflo.com/api/v2'
-
 def open() {
     valveUpdate("open")
 }
@@ -55,11 +52,23 @@ def installed() {
     configure()
 }
 
+def unschedulePolling() {
+    unschedule()
+}
+
+def schedulePolling() {
+    unschedule(poll)
+    if (parent?.pollingInterval) {
+        schedule(parent.getCronString(), poll)
+    }
+}
+
 def poll() {
     if (parent?.logEnable) log.debug("Polling Moen")
     getDeviceInfo()
     getLastAlerts()
     getHealthTestInfo()
+    parent.updateDeviceAndAppName()
 }
 
 def close() {
@@ -80,7 +89,7 @@ def sleepMode() {
 
 def valveUpdate(target) {
     def deviceId = device.getDataValue("deviceId")
-    def uri = "${baseUrl}/devices/${deviceId}"
+    def uri = "/devices/${deviceId}"
     if (parent?.logEnable) log.debug "Updating valve status to ${target}"
     def body = [valve:[target: target]]
     def response = parent.makeAPIPost(uri, body, "Valve Update")
@@ -163,7 +172,7 @@ def round(d, places = 2) {
 def getHealthTestInfo() {
     def lastHealthTestId = device.getDataValue("lastHubitatHealthtestId")
     def deviceId = device.getDataValue("deviceId")
-    def uri = "${baseUrl}/devices/${deviceId}/healthTest/${lastHealthTestId}"
+    def uri = "/devices/${deviceId}/healthTest/${lastHealthTestId}"
     if(lastHealthTestId && lastHealthTestId != "") {
         def response = parent.makeAPIGet(uri, "Get Last Hubitat HealthTest Info")
         sendEvent(name: "lastHubitatHealthtestStatus", value: response?.data?.status)
@@ -177,7 +186,7 @@ def getHealthTestInfo() {
 
 def manualHealthTest() {
     def deviceId = device.getDataValue("deviceId")
-    def uri = "${baseUrl}/devices/${deviceId}/healthTest/run"
+    def uri = "/devices/${deviceId}/healthTest/run"
     def response = parent.makeAPIPost(uri, "", "Manual Health Test")
     def roundId = response?.data?.roundId
     def created = response?.data?.created
@@ -189,7 +198,7 @@ def manualHealthTest() {
 
 def configure() {
     getDeviceInfo()
-    poll()
+    schedulePolling()
     state.configured = true
 }
 

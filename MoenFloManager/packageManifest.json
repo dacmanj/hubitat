@@ -1,10 +1,10 @@
 {
   "packageName": "Moen FLO Device Manager",
   "author": "David Manuel",
-  "version": "1.0.10",
+  "version": "1.0.12",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2022-02-26",
-  "releaseNotes": "See release notes at https://github.com/dacmanj/hubitat/tree/main/MoenFloManager#release-notes",
+  "dateReleased": "2022-07-11",
+  "releaseNotes": "Reminder: Always test your devices after an upgrade (especially critical functions like opening/closing shutoff values.\nSee release notes at https://github.com/dacmanj/hubitat/tree/main/MoenFloManager#release-notes",
   "communityLink": "https://community.hubitat.com/t/moen-flo-virtual-device/9677",
   "documentationLink": "https://github.com/dacmanj/hubitat/tree/main/MoenFloManager#readme",
   "licenseFile": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/license.txt",
@@ -13,7 +13,7 @@
       "id": "817339ff-8a6e-4d03-ba56-8591eb96c60e",
       "name": "Moen FLO Device Manager",
       "namespace": "dacmanj",
-      "location": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/apps/MoenDeviceManager.groovy",
+      "location": "https://raw.githubusercontent.com/dacmanj/hubitat/beta/MoenFloManager/apps/MoenDeviceManager.groovy",
       "required": true,
       "oauth": false,
       "primary": true
@@ -22,7 +22,7 @@
       "id": "ecfcc7e9-db5e-46d5-8ef3-06d0d8986fa6",
       "name": "Moen FLO Location Instance",
       "namespace": "dacmanj",
-      "location": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/apps/MoenLocationInstance.groovy",
+      "location": "https://raw.githubusercontent.com/dacmanj/hubitat/beta/MoenFloManager/apps/MoenLocationInstance.groovy",
       "required": true,
       "oauth": false,
       "primary": false
@@ -31,7 +31,7 @@
       "id": "1c50ffb1-80ba-478d-8442-4294eb21d809",
       "name": "Moen FLO Smart Shutoff Instance",
       "namespace": "dacmanj",
-      "location": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/apps/MoenSmartShutoffInstance.groovy",
+      "location": "https://raw.githubusercontent.com/dacmanj/hubitat/beta/MoenFloManager/apps/MoenSmartShutoffInstance.groovy",
       "required": true,
       "oauth": false,
       "primary": false
@@ -40,7 +40,7 @@
       "id": "654dbda9-4ca6-41b6-a10f-1154cd5a61c1",
       "name": "Moen FLO Smart Water Detector Instance",
       "namespace": "dacmanj",
-      "location": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/apps/MoenSmartWaterDetectorInstance.groovy",
+      "location": "https://raw.githubusercontent.com/dacmanj/hubitat/beta/MoenFloManager/apps/MoenSmartWaterDetectorInstance.groovy",
       "required": true,
       "oauth": false,
       "primary": false
@@ -51,21 +51,21 @@
       "id": "607d8650-d4b0-41c0-a1d4-d8f5094caa0c",
       "name": "Moen FLO Location",
       "namespace": "dacmanj",
-      "location": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/drivers/MoenLocation.groovy",
+      "location": "https://raw.githubusercontent.com/dacmanj/hubitat/beta/MoenFloManager/drivers/MoenLocation.groovy",
       "required": true
     },
     {
       "id": "888b906e-fc4b-400f-ae1b-0c5281001720",
       "name": "Moen FLO Smart Water Detector",
       "namespace": "dacmanj",
-      "location": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/drivers/MoenSmartWaterDetector.groovy",
+      "location": "https://raw.githubusercontent.com/dacmanj/hubitat/beta/MoenFloManager/drivers/MoenSmartWaterDetector.groovy",
       "required": true
     },
     {
       "id": "f020843f-9a00-402e-94e6-aa3d887f06db",
       "name": "Moen FLO Smart Shutoff",
       "namespace": "dacmanj",
-      "location": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/drivers/MoenSmartShutoff.groovy",
+      "location": "https://raw.githubusercontent.com/dacmanj/hubitat/beta/MoenFloManager/drivers/MoenSmartShutoff.groovy",
       "required": true
     }
   ]

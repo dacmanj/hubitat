@@ -35,7 +35,7 @@ STATUS_COLOR = {
 }
 
 
-"""WARNING!!! You must update these ids and set put hubitat ip address in a .env file to use this"""
+"""WARNING!!! You must update these ids and set hubitat ip address in a .env file to use this"""
 TARGETS = {
     "MoenFloManager": {
         "apps": [
@@ -175,6 +175,7 @@ class WatchdogModificationHandler(FileSystemEventHandler):
             driver_modified = [update_latest_version(x['id'], src_path, 'driver') for x in package_data['drivers'] if x.get('source_path') == src_path]
 
 def auto_upload():
+    print(f"""{bcolors.HEADER}STARTING AUTO-UPLOAD{bcolors.ENDC}""")
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s - %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S')
@@ -195,11 +196,14 @@ if __name__ == "__main__":
     if not package_name:
         print("Warning! you must update the app id/driver ids to match your device.")
     else:
-        if auto_upload:
-            auto_upload()
-        else:
-            if direction == 'upload':
+        if direction == 'upload':
+            print("direction upload")
+            if auto_upload:
+                print("starting auto upload")
                 update_package(package_name)
+                auto_upload()
             else:
-                retrieve_package(package_name)
+                update_package(package_name)
+        else:
+            retrieve_package(package_name)
 

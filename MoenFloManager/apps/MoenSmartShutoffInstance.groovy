@@ -18,8 +18,7 @@ definition(
     iconX3Url: "")
 
 import groovy.transform.Field
-@Field final String childNamespace = "dacmanj" // namespace of child device drivers
-@Field final String baseUrl = 'https://api-gw.meetflo.com/api/v2'
+@Field final String DEFAULT_NAME_TEMPLATE = '${location} - ${nickname} - ${deviceType} - ${deviceModel} - fw ${fwVersion}'
 
 preferences {
   page(name: "mainPage")
@@ -71,6 +70,12 @@ def settingsPage() {
         title: "Enable Device Debug Logging",
         defaultValue: true
       )
+      input (
+        name: "deviceNameTemplate", 
+        type: "text",
+        title: "Device Name Template",
+        defaultValue: DEFAULT_NAME_TEMPLATE
+      )
 		}
     if (getChildDevices().size() > 0) {
       section("Linked Device") {
@@ -83,7 +88,7 @@ def settingsPage() {
 
 
 def installed() {
-	log.info "Installed with settings: ${settings}"
+	if (logEnable) log.info "Installed with settings: ${settings}"
 	initialize()
 	createDevice()
 }
@@ -109,10 +114,11 @@ def poll() {
 def updated() {
   log.info "Updated with settings: ${settings}"
   initialize()
-  def childDevice = getChildDevice("${deviceId}-${getApp().id}")
+  unschedule()
+  def childDevice = getDevice()
   if (childDevice) {
+    updateDeviceAndAppName()
     childDevice.updated()
-    schedule(getCronString(), poll)
   } else {
     createDevice()
   }
@@ -124,6 +130,33 @@ def logsOff() {
   app.updateSetting("logEnable", false)
 }
 
+def deviceName() {
+  def template = deviceNameTemplate ?: DEFAULT_NAME_TEMPLATE
+  if (state.deviceInfo && state.location){
+    def binding = state.deviceInfo?.clone()
+    binding['location'] = state.location?.nickname
+    def deviceName = template.replaceAll(/\$\{(\w+)\}/) { k -> binding[k[1]] ?: k[0] }
+    return deviceName
+  }
+}
+
+def deviceDNI() {
+  return "${deviceId}-${getApp().id}"
+}
+
+def getDevice() {
+  def childDevice = getChildDevice(deviceDNI())
+  return childDevice
+}
+
+def updateDeviceAndAppName() {
+  def childDevice = getDevice()
+  if (childDevice && deviceName()) {
+    childDevice.setName(deviceName()) 
+    app.updateLabel(deviceName())
+  }
+}
+
 def initialize() {
   log.info "initialize()"
   state.startMinute = parent.getStartMinute(state.startMinute, pollingInterval)
@@ -133,7 +166,7 @@ def initialize() {
   def locationName = location?.nickname
   if (deviceInfo) {
     log.debug "${locationName} - ${deviceInfo?.nickname}"
-    app.updateLabel("${locationName} - ${deviceInfo?.nickname} (${deviceInfo?.deviceType})")
+    app.updateLabel(deviceName())
     state.deviceInfo = deviceInfo
     state.location = location
   }
@@ -165,8 +198,7 @@ def createDevice() {
   if (deviceId) {
     log.info "createDevice()"
     def appId = getApp().id
-    String devDNI = "${deviceId}-${appId}"
-    def childDevice = getChildDevice(devDNI)
+    def childDevice = getDevice()
     def driverMap = parent.getDriverMap()
     def deviceType = state.deviceInfo?.deviceType
     def locationId = state.deviceInfo?.location?.id
@@ -175,13 +207,14 @@ def createDevice() {
       try {
         log.debug "Creating new device for ${deviceType} ${nickname}"
         String devDriver = driverMap[deviceType] ?: driverMap["flo_device_v2"]
-        log.debug "Driver: ${devDriver}"
+        log.debug "Driver: ${devDriver}"        
         Map devProps = [
-          name: (nickname), 
+          name: (deviceName()), 
           label: (nickname),
           isComponent: true
         ]
-        childDevice = addChildDevice(childNamespace, devDriver, devDNI, devProps)
+        String devDNI = "${deviceId}-${appId}"
+        childDevice = addChildDevice(getParent().getChildNamespace(), devDriver, devDNI, devProps)
         return childDevice
       } catch (Exception ex) {
         log.error("Unable to create device for ${deviceId}: $ex")
@@ -211,7 +244,7 @@ def makeAPIPost(uri, body, requestType, successStatus = [200, 202]) {
 }
 
 def getCronString() {
-  log.debug("calling cronstring with ${state.startMinute} ${pollingInterval}")
+  if (logEnable) log.debug("calling cronstring with ${state.startMinute} ${pollingInterval}")
   return parent.getCronString(state.startMinute, pollingInterval)
 }
 
@@ -241,7 +274,7 @@ def getLocationData(locationId) {
 }
 
 def getLastDeviceAlert(deviceId) {
-  def uri = "${baseUrl}/alerts?isInternalAlarm=false&deviceId=${deviceId}"
+  def uri = "/alerts?isInternalAlarm=false&deviceId=${deviceId}"
   def response = makeAPIGet(uri, "Get Alerts")
   return response.data.items
 }

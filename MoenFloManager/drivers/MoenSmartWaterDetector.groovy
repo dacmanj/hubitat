@@ -17,8 +17,6 @@ metadata {
         capability "Polling"
         capability "SignalStrength"
 
-        command "reset"
-
         attribute "updated", "string"
         attribute "ssid", "string"
         attribute "lastEvent", "string"
@@ -28,10 +26,10 @@ metadata {
 
 }
 
-def reset() {
+
+def logout() {
     state.clear()
     unschedule()
-    configure()
 }
 
 def updated() {
@@ -44,9 +42,21 @@ def installed() {
     configure()
 }
 
+def unschedulePolling() {
+    unschedule()
+}
+
+def schedulePolling() {
+    unschedule()
+    if (parent?.pollingInterval) {
+        schedule(parent.getCronString(), poll)
+    }
+}
+
 def poll() {
     if (logEnable) log.debug("Polling Moen")
     getDeviceInfo()
+    parent.updateDeviceAndAppName()
 }
 
 def getDeviceInfo() {
@@ -91,7 +101,6 @@ def round(d, places = 2) {
 }
 
 def configure() {
-    unschedule()
-    poll()
+    schedulePolling()
     state.configured = true
 }
