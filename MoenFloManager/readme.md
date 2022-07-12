@@ -41,6 +41,15 @@ This project is not affiliated with, endorsed or sponsored by Moen Inc nor Flo T
 
 All trademarks are reserved to their respective owners.
 ## Release Notes
+- 2022-02-27 - v1.0.12
+  - Add option to vary start minute so that all sync isn't happening every x minutes past the hour
+  - Add option to set the device name and app using template values from the location/device data from the API.
+     - See the "Gear" icon in the device app instance to see all the data -- in the deviceInfo variable for the device or location variable for location.
+     - Only top level values are currently supported e.g. deviceType, but not connectivity.ssid
+     - The variable must appear inside brackets following a '$' e.g. ${deviceType} to be replaced.
+     - The name will dynamically update itself if the values change
+     - The device label can be manually configured in the device settings and is not affected by this feature
+
 - 2022-02-27 - v1.0.10
   - Add random polling start minute option in main app to reduce load on Hubitat/Moen API. 
     - Original behavior would do all updates on the hour then again each polling interval. 
