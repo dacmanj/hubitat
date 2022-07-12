@@ -39,15 +39,15 @@ STATUS_COLOR = {
 TARGETS = {
     "MoenFloManager": {
         "apps": [
-            {"id": 827, "source_path": "MoenFloManager/apps/MoenDeviceManager.groovy"},
-            {"id": 828, "source_path": "MoenFloManager/apps/MoenLocationInstance.groovy"},
-            {"id": 829, "source_path": "MoenFloManager/apps/MoenSmartShutoffInstance.groovy"},
-            {"id": 830, "source_path": "MoenFloManager/apps/MoenSmartWaterDetectorInstance.groovy"}
+            {"id": 991, "source_path": "MoenFloManager/apps/MoenDeviceManager.groovy"},
+            {"id": 992, "source_path": "MoenFloManager/apps/MoenLocationInstance.groovy"},
+            {"id": 993, "source_path": "MoenFloManager/apps/MoenSmartShutoffInstance.groovy"},
+            {"id": 994, "source_path": "MoenFloManager/apps/MoenSmartWaterDetectorInstance.groovy"}
         ],
         "drivers": [
-            {"id": 1604, "source_path": "MoenFloManager/drivers/MoenLocation.groovy"},
-            {"id": 1606, "source_path": "MoenFloManager/drivers/MoenSmartShutoff.groovy"},
-            {"id": 1605, "source_path": "MoenFloManager/drivers/MoenSmartWaterDetector.groovy"}
+            {"id": 1895, "source_path": "MoenFloManager/drivers/MoenLocation.groovy"},
+            {"id": 1897, "source_path": "MoenFloManager/drivers/MoenSmartShutoff.groovy"},
+            {"id": 1896, "source_path": "MoenFloManager/drivers/MoenSmartWaterDetector.groovy"}
         ]
     }
 }
