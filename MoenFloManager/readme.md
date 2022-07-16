@@ -41,7 +41,11 @@ This project is not affiliated with, endorsed or sponsored by Moen Inc nor Flo T
 
 All trademarks are reserved to their respective owners.
 ## Release Notes
-- 2022-02-27 - v1.0.12
+- 2022-07-16 - v1.0.13
+  - Fix release note date from v1.0.12
+  - Remove stray debug log statement from location device driver
+
+- 2022-07-11 - v1.0.12
   - Add option to vary start minute so that all sync isn't happening every x minutes past the hour
   - Add option to set the device name and app using template values from the location/device data from the API.
      - See the "Gear" icon in the device app instance to see all the data -- in the deviceInfo variable for the device or location variable for location.
