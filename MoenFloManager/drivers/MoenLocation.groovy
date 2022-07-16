@@ -134,7 +134,6 @@ def getConsumption() {
   def startDate = new Date().format('yyyy-MM-dd') + 'T00:00:00.000'
   def endDate = new Date().format('yyyy-MM-dd') + 'T23:59:59.999'
   def uri = "/water/consumption?startDate=${startDate}&endDate=${endDate}&locationId=${locationId}&interval=1h"
-  log.debug(uri)
   def response = parent.makeAPIGet(uri, "Get Consumption")
   def data = response.data
   def totalConsumptionToday = data?.aggregations?.sumTotalGallonsConsumed;
