@@ -191,7 +191,6 @@ def auto_upload():
         observer.stop()
     observer.join()
 
-
 if __name__ == "__main__":
     if not package_name:
         print("Warning! you must update the app id/driver ids to match your device.")
