@@ -75,18 +75,6 @@ def close() {
     valveUpdate("closed")
 }
 
-def home() {
-    setMode("home")
-}
-
-def away() {
-    setMode("away")
-}
-
-def sleepMode() {
-    setMode("sleep")
-}
-
 def valveUpdate(target) {
     def deviceId = device.getDataValue("deviceId")
     def uri = "/devices/${deviceId}"
