@@ -132,8 +132,8 @@ def updated() {
   log.info "Updated with settings: ${settings}"
   initialize()
   unschedule()
+  unsubscribe()
   def childDevice = getChildDevice("${locationId}-${getApp().id}")
-  def location = state.location
   if (childDevice) {
     updateDeviceAndAppName()
     childDevice.updated()
@@ -141,9 +141,8 @@ def updated() {
     createDevice()
   }
   if (logEnable) runIn(1800,logsOff)
-  unsubscribe()
   if (subscribeHSMAway) {
-      subscribe (location, "hsmStatus", handleHSMStatusUpdate)
+      subscribe(location, "hsmStatus", handleHSMStatusUpdate)
   }
 }
 
@@ -194,11 +193,7 @@ def logsOff() {
 
 def initialize() {
   log.info "initialize()"
-  log.debug('updating startMinute on app')
   state.startMinute = parent.getStartMinute(state.startMinute, pollingInterval)
-  log.debug("updated startMinute on app ${state.startMinute}")
-  
-
 
   if (locationId) {
     def locationsCache = parent?.state?.locationsCache
@@ -278,7 +273,6 @@ def makeAPIPost(uri, body, requestType, successStatus = [200, 202]) {
 }
 
 def getCronString() {
-  log.debug("calling cronstring with ${state.startMinute} ${pollingInterval}")
   return parent.getCronString(state.startMinute, pollingInterval)
 }
 
