@@ -416,7 +416,6 @@ def getStartMinute(startMinute=null, pollingInterval=null) {
     } else {
         startMinute = 0
     }
-    if (logEnable) log.info("Calculated updated startMinute: ${startMinute} / interval: ${pollingInterval} Random?: ${randomStartMinute}")
     return startMinute
 }
 
@@ -424,7 +423,6 @@ def getCronString(startMinute=0, pollingInterval=10) {
   startMinute = startMinute ? startMinute : "0"
   pollingInterval = pollingInterval ? pollingInterval : "10"
   def cronString = "0 ${startMinute}/${pollingInterval} * 1/1 * ? *"
-  if (logEnable) log.debug(cronString)
   return cronString
 }
 
