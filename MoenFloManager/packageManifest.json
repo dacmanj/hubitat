@@ -1,7 +1,7 @@
 {
   "packageName": "Moen FLO Device Manager",
   "author": "David Manuel",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2022-11-08",
   "releaseNotes": "Reminder: Always test your devices after an upgrade (especially critical functions like opening/closing shutoff values.)\n\nSee release notes at https://github.com/dacmanj/hubitat/tree/main/MoenFloManager#release-notes",

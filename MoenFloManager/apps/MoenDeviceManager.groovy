@@ -88,7 +88,8 @@ def deviceInstaller() {
       app(name: "shutoffApps", appName: appMap["flo_device_v2"], namespace: "dacmanj", title: "<b>Add Shutoff Valve</b>", multiple: true)
     }
     section("<h3>Water Detectors</h3>") {
-      app(name: "waterDetectorApps", appName: appMap["puck_oem"], namespace: "dacmanj", title: "<b>Add Water Detector</b>", multiple: true)
+      paragraph("<i>To use the Moen Water Detectors, the Water Detector App and Driver must be installed.</i>")
+      app(name: "waterDetectorApps", appName: appMap["puck_oem"], namespace: "dacmanj", title: "<b>Add Water Detector.</b>", multiple: true)
     }
     section("<h3>Locations</h3>") {
       paragraph("<i>Locations are virtual devices representing each location in the Moen Flo app and are used to set/see presence mode (home, away, sleep) and consumption.</i>")
