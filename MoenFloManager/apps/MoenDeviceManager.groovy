@@ -354,16 +354,15 @@ def getDeviceData(deviceId) {
 }
 
 def checkTokenLife() {
-    if (state.tokenExpiration){
-        remainingMinutes = (int)((new Date(state.tokenExpiration).getTime() - new Date().getTime())/1000/60)
+    if (state.tokenExpiration) {
+        remainingMinutes = (int)((state.tokenExpiration - System.currentTimeMillis()) / 1000 / 60)
         if (logEnable) log.info "Moen API Token Life Remaining: ${remainingMinutes} minutes"
-    }
-    else {
+    } else {
         remainingMinutes = 0
     }
-    if (remainingMinutes < 60) {
+    if (remainingMinutes < 5) {
         log.debug("Moen API Token Life Remaining Minutes only ${remainingMinutes} -- refreshing")
-        authenticate()
+        refreshToken()
     }
     return remainingMinutes
 }
