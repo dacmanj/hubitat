@@ -1,0 +1,13 @@
+{
+  "192.168.28.2": {
+    "MoenFloManager/apps/MoenDeviceManager.groovy": { "id": null },
+    "MoenFloManager/apps/MoenSmartShutoffInstance.groovy": { "id": null },
+    "MoenFloManager/apps/MoenSmartWaterDetectorInstance.groovy": { "id": null },
+    "MoenFloManager/apps/MoenLocationInstance.groovy": { "id": null },
+    "MoenFloManager/drivers/MoenLocation.groovy": { "id": null },
+    "MoenFloManager/drivers/MoenSmartShutoff.groovy": { "id": null },
+    "MoenFloManager/drivers/MoenSmartWaterDetector.groovy": { "id": null },
+    "MoenFloStandalone/drivers/moenflo.groovy": { "id": null },
+    "MoenFloStandalone/drivers/moenflodetector.groovy": { "id": null }
+  }
+}

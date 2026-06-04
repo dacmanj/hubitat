@@ -1,3 +1,6 @@
 .idea/
 .env
 tools/data
+.hubitat.json
+node_modules/
+dist/

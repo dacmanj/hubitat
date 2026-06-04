@@ -1,0 +1,11 @@
+{
+  "name": "hubitat-deploy",
+  "private": true,
+  "scripts": {
+    "watch": "node deploy.js"
+  },
+  "dependencies": {
+    "chokidar": "^3.6.0",
+    "dotenv": "^16.4.0"
+  }
+}

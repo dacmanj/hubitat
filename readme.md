@@ -1,39 +1,170 @@
 # Moen Flo for Hubitat
-There are two versions: the Moen FLO Device Manager and the Moen Flo Integration. ***Moen FLO Device Manager*** is the recommended version getting new features going forward and the other original "Moen Flo Integration" / driver will only be updated to fix bugs. 
 
-1. [Moen FLO Device Manager](https://github.com/dacmanj/hubitat/tree/main/MoenFloManager)
-2. [LEGACY: Moen Flo Integration](https://github.com/dacmanj/hubitat/tree/main/MoenFloStandalone)
+Groovy drivers and apps that integrate [Moen FLO Smart Water](https://www.moenflo.com/) devices with a [Hubitat](https://hubitat.com/) hub. Communicates with the Moen Flo cloud API to monitor water usage, pressure, temperature, and control your shutoff valve — all from within Hubitat.
+
+---
+
+## Packages
+
+There are two packages. **MoenFloManager is recommended** for all new installs.
+
+| Package | Status | Description |
+|---|---|---|
+| [MoenFloManager](MoenFloManager/) | Active — new features | Multi-app architecture supporting all three Flo device types |
+| [MoenFloStandalone](MoenFloStandalone/) | Legacy — bug fixes only | Single standalone driver for the Smart Shutoff valve |
+
+---
+
+## Supported Devices
+
+### Moen FLO Smart Shutoff (`flo_device_v2`)
+Controls and monitors the main water shutoff valve.
+
+- **Capabilities:** Valve, Temperature Measurement, Signal Strength, Location Mode, Momentary, Pushable Button
+- **Attributes:** `mode` (home/away/sleep), `gpm`, `psi`, `rssi`, `ssid`, water usage totals, health test status, last event details
+
+### Moen FLO Smart Water Detector (`puck_oem`)
+Detects leaks at individual locations (under sinks, near water heaters, etc.). Managed by MoenFloManager. Optional — install only if you have this device.
+
+### Moen FLO Location
+A virtual device representing a Flo "location" (e.g. your home). Aggregates status and allows location-level mode control.
+
+---
 
 ## Installation
-Both are available through Hubitat Package Manager and that is the recommended way to install them and ensure you have the latest version.
 
-If you already have Hubitat Package Manager, follow the steps [here](https://github.com/dcmeglio/hubitat-packagemanager#installing-a-package) to install a package. 
+### Hubitat Package Manager (recommended)
 
-### Hubitat Package Manager
-If you do not already have it:
+[Hubitat Package Manager (HPM)](https://github.com/HubitatCommunity/hubitatpackagemanager) handles installation and future updates automatically.
 
-1. Go to your hub 
-2. Go to Apps Code
-3. Click New App
-4. Click Import
-5. Paste the URL https://raw.githubusercontent.com/dcmeglio/hubitat-packagemanager/master/apps/Package_Manager.groovy
-6. Click Import
-7. Click OK
-8. Click Save
-9. Go to Apps
-10. Click "Add User Apps"
-11. Select Hubitat Package Manager
-12. Setup the Hubitat Package Manager see [here](https://github.com/dcmeglio/hubitat-packagemanager) for more instructions on setting up HPM
+1. If you don't have HPM installed yet:
+   - Go to **Apps Code** on your hub → **New App** → **Import**
+   - Paste the HPM install URL from the [HPM repo](https://github.com/HubitatCommunity/hubitatpackagemanager) → **Import** → **Save**
+   - Go to **Apps** → **Add User App** → **Hubitat Package Manager** and complete setup
+2. Open HPM on your hub and choose **Install**
+3. Search for **Moen FLO Device Manager** (or **Moen Flo Integration** for the legacy standalone)
+4. Follow the prompts to install
 
-### References
-* [Hubitat Documenation: How to Install Custom Apps](https://docs.hubitat.com/index.php?title=How_to_Install_Custom_Apps)
-* [Hubitat Package Manager](https://github.com/dcmeglio/hubitat-packagemanager)
+### Manual Installation
 
-paste the app into the app code and hit save. then go to apps, user apps then add package manager. 
+If you prefer to install without HPM, import each file individually via your hub's code editor.
+
+**MoenFloManager** — import in this order:
+
+| Type | File | Import URL |
+|---|---|---|
+| App | MoenDeviceManager | `MoenFloManager/apps/MoenDeviceManager.groovy` |
+| App | MoenLocationInstance | `MoenFloManager/apps/MoenLocationInstance.groovy` |
+| App | MoenSmartShutoffInstance | `MoenFloManager/apps/MoenSmartShutoffInstance.groovy` |
+| App | MoenSmartWaterDetectorInstance | `MoenFloManager/apps/MoenSmartWaterDetectorInstance.groovy` |
+| Driver | MoenLocation | `MoenFloManager/drivers/MoenLocation.groovy` |
+| Driver | MoenSmartShutoff | `MoenFloManager/drivers/MoenSmartShutoff.groovy` |
+| Driver | MoenSmartWaterDetector *(optional)* | `MoenFloManager/drivers/MoenSmartWaterDetector.groovy` |
+
+**MoenFloStandalone** (legacy):
+
+| Type | File | Import URL |
+|---|---|---|
+| Driver | moenflo | `MoenFloStandalone/drivers/moenflo.groovy` |
+| Driver | moenflodetector | `MoenFloStandalone/drivers/moenflodetector.groovy` |
+
+To import: **Apps Code** (or **Drivers Code**) → **New** → **Import** → paste the raw GitHub URL → **Import** → **Save**.
+
+See also: [Hubitat Documentation — How to Install Custom Apps](https://docs.hubitat.com/index.php?title=How_to_Install_Custom_Apps)
+
+---
+
+## Development Setup
+
+### Node.js Deploy Script (recommended)
+
+`deploy.js` watches `**/*.groovy` files and auto-deploys changes to your hub on save.
+
+**Prerequisites:** Node.js
+
+```bash
+npm install
+```
+
+**Configuration** — create a `.env` file in the repo root:
+
+```
+HUBITAT_URL=http://<your-hub-ip>
+```
+
+Create a `.hubitat.json` file mapping source file paths to Hubitat driver/app IDs:
+
+```json
+{
+  "MoenFloManager/apps/MoenDeviceManager.groovy": 123,
+  "MoenFloManager/drivers/MoenSmartShutoff.groovy": 456
+}
+```
+
+(Find the IDs in your hub's Apps Code / Drivers Code URLs.)
+
+**Run:**
+
+```bash
+npm run watch
+```
+
+### Legacy Python Toolset
+
+A Poetry-based toolset in `tools/` supports manual upload and retrieve operations.
+
+```bash
+# Install dependencies
+poetry install
+
+# Upload local files to hub
+python tools/uploader.py MoenFloManager upload
+
+# Retrieve files from hub to local
+python tools/uploader.py MoenFloManager retrieve
+```
+
+Requires a `.env` file:
+
+```
+HUBITAT=<hub-ip>
+TARGET=MoenFloManager
+DIRECTION=upload
+```
+
+---
+
+## Repository Structure
+
+```
+MoenFloManager/
+  apps/
+    MoenDeviceManager.groovy
+    MoenLocationInstance.groovy
+    MoenSmartShutoffInstance.groovy
+    MoenSmartWaterDetectorInstance.groovy
+  drivers/
+    MoenLocation.groovy
+    MoenSmartShutoff.groovy
+    MoenSmartWaterDetector.groovy   ← optional
+  packageManifest.json
+
+MoenFloStandalone/
+  drivers/
+    moenflo.groovy
+    moenflodetector.groovy
+  packageManifest.json
+
+tools/                              ← legacy Python toolset
+deploy.js                           ← Node.js watch/deploy script
+```
+
+---
+
 ## License
-Moen FLO Device Manager by David Manuel is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0).
-Software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
-This project is not affiliated with, endorsed or sponsored by Moen Inc nor Flo Technologies, Inc. 
+Moen Flo for Hubitat by [David Manuel](https://github.com/dacmanj) is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0).
 
-All trademarks are reserved to their respective owners.
+Software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND. See the license for details.
+
+> This project is not affiliated with, endorsed by, or sponsored by Moen Inc. or Flo Technologies, Inc. All trademarks are reserved to their respective owners.
