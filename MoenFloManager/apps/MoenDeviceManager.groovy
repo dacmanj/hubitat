@@ -386,7 +386,7 @@ def makeAPIGet(uri, request_type, success_status = [200, 202], root_url = BASE_U
     while (!response?.status && tries < max_tries) {
         def headers = [:]
         headers.put("Content-Type", "application/json")
-        headers.put("Authorization", state.token)
+        headers.put("Authorization", "Bearer ${state.token}")
 
         try {
             httpGet([headers: headers, uri: uri]) { resp -> def msg = ""
@@ -402,11 +402,12 @@ def makeAPIGet(uri, request_type, success_status = [200, 202], root_url = BASE_U
         catch (Exception e) {
             log.error "${request_type} Exception: ${e}"
             if (e.getMessage()?.contains("Forbidden") || e.getMessage()?.contains("Unauthorized")) {
-                log.debug "Forbidden/Unauthorized Exception..."
+                log.debug "Forbidden/Unauthorized on ${request_type}, trying token refresh"
+                refreshToken()
             } else {
                 log.error "${request_type} Failed ${e}"
+                authenticate()
             }
-            authenticate()
         }
         tries++
 
