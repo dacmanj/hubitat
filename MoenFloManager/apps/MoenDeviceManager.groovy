@@ -40,8 +40,10 @@ import groovy.transform.Field
    "DEFAULT":             "Moen FLO Smart Shutoff Instance"
 ]
 
-@Field final String BASE_URL = 'https://api-gw.meetflo.com/api/v2'
-@Field final String AUTH_URL = 'https://api.meetflo.com/api/v1/users/auth'
+@Field final String BASE_URL             = 'https://api-gw.meetflo.com/api/v2'
+@Field final String AUTH_URL             = 'https://api-gw.meetflo.com/api/v1/oauth2/token'
+@Field final String DEFAULT_CLIENT_ID     = '3baec26f-0e8b-4e1d-84b0-e178f05ea0a5'
+@Field final String DEFAULT_CLIENT_SECRET = '3baec26f-0e8b-4e1d-84b0-e178f05ea0a5'
 
 def mainPage() {
   initialize()
@@ -195,6 +197,20 @@ def uninstalled() {
 
 def getDriverMap() {
     return driverMap;
+}
+
+def extractUserIdFromJwt(String jwt) {
+    try {
+        def payload = jwt.split('\\.')[1]
+        def padding = (4 - payload.length() % 4) % 4
+        def padded = payload + ('=' * padding)
+        def decoded = new String(java.util.Base64.getUrlDecoder().decode(padded))
+        def json = new groovy.json.JsonSlurper().parseText(decoded)
+        return json.userId ?: json.sub
+    } catch (Exception e) {
+        log.error "Failed to extract userId from JWT: ${e}"
+        return null
+    }
 }
 
 def authenticate() {
