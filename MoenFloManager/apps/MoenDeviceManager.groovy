@@ -433,7 +433,7 @@ def makeAPIPost(uri, body, request_type, success_status = [200, 202], root_url =
     while (!response?.status && tries < max_tries) {
         def headers = [:]
         headers.put("Content-Type", "application/json")
-        headers.put("Authorization", state.token)
+        headers.put("Authorization", "Bearer ${state.token}")
 
         try {
             httpPostJson([headers: headers, uri: uri, body: body]) { resp -> def msg = ""
@@ -449,8 +449,8 @@ def makeAPIPost(uri, body, request_type, success_status = [200, 202], root_url =
         catch (Exception e) {
             log.error "${request_type} Exception: ${e}"
             if (e.getMessage().contains("Forbidden") || e.getMessage().contains("Unauthorized")) {
-                log.debug "Forbidden/Unauthorized Exception... Refreshing token..."
-                authenticate()
+                log.debug "Forbidden/Unauthorized on ${request_type}, trying token refresh"
+                refreshToken()
             }
         }
         tries++
