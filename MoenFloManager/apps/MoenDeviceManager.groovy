@@ -105,6 +105,11 @@ def deviceInstaller() {
       paragraph('Units: ' + getUnitDisplay() + ' (to change units -- update your settings in the Moen Flo App)')
       input(name: "btnLogout", type: "button", title: "Logout", backgroundColor: "#cc2d3b", color: "#ffffff")
     }
+    section("<b>Advanced</b>") {
+      input(name: "clientId",     type: "string",   title: "OAuth Client ID",     defaultValue: DEFAULT_CLIENT_ID,     required: false)
+      input(name: "clientSecret", type: "password", title: "OAuth Client Secret", defaultValue: DEFAULT_CLIENT_SECRET, required: false)
+      paragraph("<i>Only change these if Moen rotates the API credentials.</i>")
+    }
     section("<b>Diagnostics</b>") {
       input(name: "btnInvalidToken", type: "button", title: "Reset Token")
       input(name: "btnClearCaches", type: "button", title: "Reset All Caches")
@@ -574,6 +579,7 @@ void appButtonHandler(btn) {
       break
     case "btnInvalidToken":
       state.token = '9999999999999999'
+      state.refreshToken = null
       break
     case "btnSetupAllDevices":
       setupAllDevices()
