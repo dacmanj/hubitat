@@ -220,47 +220,47 @@ def authenticate() {
     if (!password) {
         log.info("Login Skipped: No password")
         state.authenticationFailures = 99
+        return
     }
-    else {
-        if (state.authenticationFailures >= 3) {
-            log.error("Failed to authenticate after three tries. Giving up. Log out and back in to retry.")
-        }
-        
-        def body = [username:username, password:password]
-        def headers = [:]
-        headers.put("Content-Type", "application/json")
-
-        try {
-            httpPostJson([headers: headers, uri: uri, body: body]) { response -> def msg = response?.status
-                if (logEnable) log.debug("Login received response code ${response?.status}")
-                    if (response?.status == 200) {
-                        msg = "Success"
-                        state.token = response.data.token
-                        state.userId = response.data.tokenPayload.user.user_id
-                        state.tokenExpiration = ((long)response.data.timeNow + (long)response.data.tokenExpiration)*1000
-                        state.tokenExpirationDate = new Date(((long)response.data.timeNow + (long)response.data.tokenExpiration)*1000).toString()
-                        state.authenticated = true
-                        state.authenticationFailures = 0
-                    }
-                    else {
-                        log.error "Login Failed: (${response.status}) ${response.data}"
-                        state.authenticated = false
-                        state.authenticationFailures = (state.authenticationFailures >=0 ? state.authenticationFailures + 1 : 0)
-                    }
-              }
-        }
-        catch (Exception e) {
-            log.error "Login exception: ${e}"
-            log.error "Login Failed: Please confirm your Flo Credentials"
-            state.authenticated = false
-            state.authenticationFailures = (state.authenticationFailures >=0 ? state.authenticationFailures + 1 : 0)
-        }
-        if (logEnable) log.debug("failure count: ${state.authenticationFailures}")
-    }
-    if (state.authenticated) {
-        if (logEnable) log.debug("authentication successful")
+    if (state.authenticationFailures >= 3) {
+        log.error("Failed to authenticate after three tries. Giving up. Log out and back in to retry.")
+        return
     }
 
+    def cid     = settings.clientId     ?: DEFAULT_CLIENT_ID
+    def csecret = settings.clientSecret ?: DEFAULT_CLIENT_SECRET
+    def body = "grant_type=password" +
+               "&username=${java.net.URLEncoder.encode(username as String, 'UTF-8')}" +
+               "&password=${java.net.URLEncoder.encode(password as String, 'UTF-8')}" +
+               "&client_id=${cid}" +
+               "&client_secret=${csecret}"
+    def headers = ['Content-Type': 'application/x-www-form-urlencoded']
+
+    try {
+        httpPost([headers: headers, uri: uri, body: body]) { response ->
+            if (logEnable) log.debug("Login received response code ${response?.status}")
+            if (response?.status == 200) {
+                state.token            = response.data.access_token
+                state.refreshToken     = response.data.refresh_token
+                state.tokenExpiration  = System.currentTimeMillis() + ((long)response.data.expires_in * 1000L)
+                state.tokenExpirationDate = new Date(state.tokenExpiration).toString()
+                state.userId           = extractUserIdFromJwt(state.token as String)
+                state.authenticated    = true
+                state.authenticationFailures = 0
+                if (logEnable) log.debug("authentication successful, userId: ${state.userId}")
+            } else {
+                log.error "Login Failed: (${response?.status}) ${response?.data}"
+                state.authenticated = false
+                state.authenticationFailures = (state.authenticationFailures >= 0 ? state.authenticationFailures + 1 : 0)
+            }
+        }
+    } catch (Exception e) {
+        log.error "Login exception: ${e}"
+        log.error "Login Failed: Please confirm your Flo Credentials"
+        state.authenticated = false
+        state.authenticationFailures = (state.authenticationFailures >= 0 ? state.authenticationFailures + 1 : 0)
+    }
+    if (logEnable) log.debug("failure count: ${state.authenticationFailures}")
 }
 
 def getUserInfo() {
