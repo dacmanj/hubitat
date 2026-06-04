@@ -263,6 +263,41 @@ def authenticate() {
     if (logEnable) log.debug("failure count: ${state.authenticationFailures}")
 }
 
+def refreshToken() {
+    if (!state.refreshToken) {
+        if (logEnable) log.debug("No refresh token — falling back to full login")
+        authenticate()
+        return
+    }
+    if (logEnable) log.debug("refreshToken()")
+    def cid     = settings.clientId     ?: DEFAULT_CLIENT_ID
+    def csecret = settings.clientSecret ?: DEFAULT_CLIENT_SECRET
+    def body = "grant_type=refresh_token" +
+               "&refresh_token=${java.net.URLEncoder.encode(state.refreshToken as String, 'UTF-8')}" +
+               "&client_id=${cid}" +
+               "&client_secret=${csecret}"
+    def headers = ['Content-Type': 'application/x-www-form-urlencoded']
+    try {
+        httpPost([headers: headers, uri: AUTH_URL, body: body]) { response ->
+            if (response?.status == 200) {
+                state.token           = response.data.access_token
+                state.refreshToken    = response.data.refresh_token
+                state.tokenExpiration = System.currentTimeMillis() + ((long)response.data.expires_in * 1000L)
+                state.tokenExpirationDate = new Date(state.tokenExpiration).toString()
+                state.authenticated   = true
+                state.authenticationFailures = 0
+                if (logEnable) log.debug("Token refreshed successfully")
+            } else {
+                log.warn "Token refresh failed (${response?.status}), falling back to full login"
+                authenticate()
+            }
+        }
+    } catch (Exception e) {
+        log.warn "Token refresh exception: ${e}, falling back to full login"
+        authenticate()
+    }
+}
+
 def getUserInfo() {
   if (!state.authenticated) {
       log.info "Skipped Get User Info: Not Logged In"
