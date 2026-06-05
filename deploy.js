@@ -20,7 +20,7 @@ function findEntry(relpath) {
   if (!hub) { console.error(`No .hubitat.json entry for hub ${HUB_HOST}`); return null; }
   const entry = hub[relpath];
   if (!entry) return null;
-  const type = relpath.split('/')[0].replace(/s$/, ''); // "drivers" → "driver"
+  const type = relpath.split('/')[1].replace(/s$/, ''); // "apps" → "app", "drivers" → "driver"
   return { type, id: entry.id };
 }
 
