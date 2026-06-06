@@ -57,3 +57,11 @@ VS Code tasks (`Terminal > Run Task`) also expose "Upload to Hubitat" and "Retri
 ## Version Management
 
 Version strings live in two places that must stay in sync: the `version` field in `packageManifest.json` and the `version` metadata at the top of each Groovy driver/app file.
+
+When bumping the version for a package, always update release notes in both places:
+1. **`<package>/readme.md`** — add a dated bullet list entry under `## Release Notes` summarising what changed
+2. **`<package>/packageManifest.json`** — update the `releaseNotes` field with a short summary (this is what Hubitat Package Manager shows users during upgrades); also update `dateReleased` to today's date
+
+Also update the Node.js deploy tooling if relevant:
+- `npm run deploy` — pushes all files to the hub at once (uses `.hubitat.json` for the id mapping)
+- `npm run watch` — watches for file changes and deploys automatically
