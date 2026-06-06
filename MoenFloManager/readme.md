@@ -48,6 +48,8 @@ All trademarks are reserved to their respective owners.
   - Fix sleep mode returning 400 error when revert settings had not been explicitly saved
   - Restrict sleep mode revert time to valid API values: 2 hours, 24 hours, or 72 hours
   - Add optional advanced settings for custom OAuth client ID/secret
+  - Fix logout button text color
+  - Add Bearer token prefix to debug log output for API calls
 
 - 2022-07-16 - v1.0.13
   - Fix release note date from v1.0.12
