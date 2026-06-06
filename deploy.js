@@ -35,7 +35,7 @@ function get(endpoint) {
   });
 }
 
-function post(endpoint, body) {
+function post(endpoint, body, contentType = 'application/x-www-form-urlencoded') {
   return new Promise((resolve, reject) => {
     const parsed = new URL(endpoint);
     const data = Buffer.from(body, 'utf8');
@@ -44,7 +44,7 @@ function post(endpoint, body) {
       port:     parsed.port || 80,
       path:     parsed.pathname,
       method:   'POST',
-      headers:  { 'Content-Type': 'application/json', 'Content-Length': data.length },
+      headers:  { 'Content-Type': contentType, 'Content-Length': data.length },
     }, (res) => {
       let buf = '';
       res.on('data', chunk => buf += chunk);
@@ -71,11 +71,12 @@ async function deploy(filepath) {
     }
     const { version } = JSON.parse(cur.body)[0];
     const source  = fs.readFileSync(filepath, 'utf8');
-    const payload = JSON.stringify({ id, source, version });
+    const payload = new URLSearchParams({ id: String(id), source, version: String(version) }).toString();
 
-    const res = await post(`${HUB_URL}/${type}/saveOrUpdateJson`, payload);
+    const res = await post(`${HUB_URL}/${type}/ajax/update`, payload);
     if (res.status >= 200 && res.status < 300) {
-      console.log(`[${type}] ${relpath} → v${version + 1} deployed`);
+      const newVersion = (() => { try { return JSON.parse(res.body).version; } catch { return version + 1; } })();
+      console.log(`[${type}] ${relpath} → v${newVersion} deployed`);
     } else {
       console.error(`[${type}] ${relpath} → FAILED HTTP ${res.status}: ${res.body}`);
     }
