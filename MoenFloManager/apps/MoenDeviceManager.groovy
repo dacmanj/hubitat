@@ -375,7 +375,7 @@ def checkTokenLife() {
 def makeAPIGet(uri, request_type, success_status = [200, 202], root_url = BASE_URL) {
     checkTokenLife()
     uri = (root_url) ? root_url + uri : uri
-    if (logEnable) log.debug "makeAPIGet: ${request_type} ${uri}"
+    if (logEnable) log.debug "makeAPIGet: ${request_type} ${uri} [Bearer ${(state.token as String)?.take(8)}...]"
 
     if (!settings.password) {
         log.error("User is Logged out. Return to the Moen Flo Manager App and login again to resume updates.");
@@ -421,7 +421,7 @@ def makeAPIGet(uri, request_type, success_status = [200, 202], root_url = BASE_U
 }
 
 def makeAPIPost(uri, body, request_type, success_status = [200, 202], root_url = BASE_URL) {
-    if (logEnable) log.debug "makeAPIPost: ${request_type} ${uri}"
+    if (logEnable) log.debug "makeAPIPost: ${request_type} ${uri} [Bearer ${(state.token as String)?.take(8)}...]"
     checkTokenLife()
     uri = (root_url) ? root_url + uri : uri
     if (!settings.password) {
