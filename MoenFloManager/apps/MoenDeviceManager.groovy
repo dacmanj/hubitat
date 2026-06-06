@@ -209,7 +209,7 @@ def extractUserIdFromJwt(String jwt) {
         def payload = jwt.split('\\.')[1]
         def padding = (4 - payload.length() % 4) % 4
         def padded = payload + ('=' * padding)
-        def decoded = new String(java.util.Base64.getUrlDecoder().decode(padded))
+        def decoded = new String(padded.replace('-', '+').replace('_', '/').decodeBase64())
         def json = new groovy.json.JsonSlurper().parseText(decoded)
         return json.userId ?: json.sub
     } catch (Exception e) {
