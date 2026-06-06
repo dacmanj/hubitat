@@ -86,11 +86,15 @@ async function deploy(filepath) {
   }
 }
 
-const pending = new Map();
-
-chokidar.watch('**/*.groovy', { ignoreInitial: true }).on('change', filepath => {
-  clearTimeout(pending.get(filepath));
-  pending.set(filepath, setTimeout(() => deploy(filepath), 300));
-});
-
-console.log(`Watching **/*.groovy — hub: ${HUB_URL}`);
+if (process.argv.includes('--all')) {
+  const hub = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'))[HUB_HOST];
+  if (!hub) { console.error(`No .hubitat.json entry for hub ${HUB_HOST}`); process.exit(1); }
+  Promise.all(Object.keys(hub).map(relpath => deploy(path.join(__dirname, relpath))));
+} else {
+  const pending = new Map();
+  chokidar.watch('**/*.groovy', { ignoreInitial: true }).on('change', filepath => {
+    clearTimeout(pending.get(filepath));
+    pending.set(filepath, setTimeout(() => deploy(filepath), 300));
+  });
+  console.log(`Watching **/*.groovy — hub: ${HUB_URL}`);
+}
