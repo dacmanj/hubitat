@@ -103,7 +103,7 @@ def deviceInstaller() {
       paragraph("<i>(Recommended once app is setup and working -- this spreads out load on hub and Moen API otherwise polls happen every polling interval starting on the hour. To see the schedule, check the bottom of the device page.</i>")
       input(name: 'logAutoTimeOut', type: "bool", title: "Automatically cancel logging afer 30 minutes?", required: false, defaultValue: true, submitOnChange: true)
       paragraph('Units: ' + getUnitDisplay() + ' (to change units -- update your settings in the Moen Flo App)')
-      input(name: "btnLogout", type: "button", title: "Logout", backgroundColor: "#cc2d3b", color: "#ffffff")
+      input(name: "btnLogout", type: "button", title: "<span style='color:#ffffff'>Logout</span>", backgroundColor: "#cc2d3b")
     }
     section("<b>Advanced</b>") {
       input(name: "clientId",     type: "string",   title: "OAuth Client ID",     defaultValue: DEFAULT_CLIENT_ID,     required: false)
