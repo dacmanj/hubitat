@@ -2,7 +2,8 @@
   "name": "hubitat-deploy",
   "private": true,
   "scripts": {
-    "watch": "node deploy.js"
+    "watch": "node deploy.js",
+    "deploy": "node deploy.js --all"
   },
   "dependencies": {
     "chokidar": "^3.6.0",

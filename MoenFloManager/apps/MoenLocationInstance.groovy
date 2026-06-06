@@ -73,9 +73,10 @@ def settingsPage() {
       paragraph("<b>Polling Start Minute:</b>&nbsp;<span>${state.startMinute}</span>")
       input(
         name: "revertMinutes",
-        type: "number",
-        title: "Revert Time in Minutes (after Sleep)",
-        defaultValue: 120)
+        type: "enum",
+        title: "Revert Time (after Sleep)",
+        options: ["120": "2 hours", "1440": "24 hours", "4320": "72 hours"],
+        defaultValue: "120")
       input(
         name: "subscribeHSMAway", 
         type: "bool",

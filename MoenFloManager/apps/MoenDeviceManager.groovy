@@ -40,8 +40,10 @@ import groovy.transform.Field
    "DEFAULT":             "Moen FLO Smart Shutoff Instance"
 ]
 
-@Field final String BASE_URL = 'https://api-gw.meetflo.com/api/v2'
-@Field final String AUTH_URL = 'https://api.meetflo.com/api/v1/users/auth'
+@Field final String BASE_URL             = 'https://api-gw.meetflo.com/api/v2'
+@Field final String AUTH_URL             = 'https://api-gw.meetflo.com/api/v1/oauth2/token'
+@Field final String DEFAULT_CLIENT_ID     = '3baec26f-0e8b-4e1d-84b0-e178f05ea0a5'
+@Field final String DEFAULT_CLIENT_SECRET = '3baec26f-0e8b-4e1d-84b0-e178f05ea0a5'
 
 def mainPage() {
   initialize()
@@ -101,7 +103,12 @@ def deviceInstaller() {
       paragraph("<i>(Recommended once app is setup and working -- this spreads out load on hub and Moen API otherwise polls happen every polling interval starting on the hour. To see the schedule, check the bottom of the device page.</i>")
       input(name: 'logAutoTimeOut', type: "bool", title: "Automatically cancel logging afer 30 minutes?", required: false, defaultValue: true, submitOnChange: true)
       paragraph('Units: ' + getUnitDisplay() + ' (to change units -- update your settings in the Moen Flo App)')
-      input(name: "btnLogout", type: "button", title: "Logout", backgroundColor: "#cc2d3b", color: "#ffffff")
+      input(name: "btnLogout", type: "button", title: "<span style='color:#ffffff'>Logout</span>", backgroundColor: "#cc2d3b")
+    }
+    section("<b>Advanced</b>") {
+      input(name: "clientId",     type: "string",   title: "OAuth Client ID",     defaultValue: DEFAULT_CLIENT_ID,     required: false)
+      input(name: "clientSecret", type: "password", title: "OAuth Client Secret", defaultValue: DEFAULT_CLIENT_SECRET, required: false)
+      paragraph("<i>Only change these if Moen rotates the API credentials.</i>")
     }
     section("<b>Diagnostics</b>") {
       input(name: "btnInvalidToken", type: "button", title: "Reset Token")
@@ -197,6 +204,20 @@ def getDriverMap() {
     return driverMap;
 }
 
+def extractUserIdFromJwt(String jwt) {
+    try {
+        def payload = jwt.split('\\.')[1]
+        def padding = (4 - payload.length() % 4) % 4
+        def padded = payload + ('=' * padding)
+        def decoded = new String(padded.replace('-', '+').replace('_', '/').decodeBase64())
+        def json = new groovy.json.JsonSlurper().parseText(decoded)
+        return json.userId ?: json.sub
+    } catch (Exception e) {
+        log.error "Failed to extract userId from JWT: ${e}"
+        return null
+    }
+}
+
 def authenticate() {
     state.authenticated = false
     if (logEnable) log.debug("authenticate()")
@@ -204,47 +225,82 @@ def authenticate() {
     if (!password) {
         log.info("Login Skipped: No password")
         state.authenticationFailures = 99
+        return
     }
-    else {
-        if (state.authenticationFailures >= 3) {
-            log.error("Failed to authenticate after three tries. Giving up. Log out and back in to retry.")
-        }
-        
-        def body = [username:username, password:password]
-        def headers = [:]
-        headers.put("Content-Type", "application/json")
-
-        try {
-            httpPostJson([headers: headers, uri: uri, body: body]) { response -> def msg = response?.status
-                if (logEnable) log.debug("Login received response code ${response?.status}")
-                    if (response?.status == 200) {
-                        msg = "Success"
-                        state.token = response.data.token
-                        state.userId = response.data.tokenPayload.user.user_id
-                        state.tokenExpiration = ((long)response.data.timeNow + (long)response.data.tokenExpiration)*1000
-                        state.tokenExpirationDate = new Date(((long)response.data.timeNow + (long)response.data.tokenExpiration)*1000).toString()
-                        state.authenticated = true
-                        state.authenticationFailures = 0
-                    }
-                    else {
-                        log.error "Login Failed: (${response.status}) ${response.data}"
-                        state.authenticated = false
-                        state.authenticationFailures = (state.authenticationFailures >=0 ? state.authenticationFailures + 1 : 0)
-                    }
-              }
-        }
-        catch (Exception e) {
-            log.error "Login exception: ${e}"
-            log.error "Login Failed: Please confirm your Flo Credentials"
-            state.authenticated = false
-            state.authenticationFailures = (state.authenticationFailures >=0 ? state.authenticationFailures + 1 : 0)
-        }
-        if (logEnable) log.debug("failure count: ${state.authenticationFailures}")
-    }
-    if (state.authenticated) {
-        if (logEnable) log.debug("authentication successful")
+    if (state.authenticationFailures >= 3) {
+        log.error("Failed to authenticate after three tries. Giving up. Log out and back in to retry.")
+        return
     }
 
+    def cid     = settings.clientId     ?: DEFAULT_CLIENT_ID
+    def csecret = settings.clientSecret ?: DEFAULT_CLIENT_SECRET
+    def body = "grant_type=password" +
+               "&username=${java.net.URLEncoder.encode(username as String, 'UTF-8')}" +
+               "&password=${java.net.URLEncoder.encode(password as String, 'UTF-8')}" +
+               "&client_id=${cid}" +
+               "&client_secret=${csecret}"
+    def headers = ['Content-Type': 'application/x-www-form-urlencoded']
+
+    try {
+        httpPost([headers: headers, uri: uri, body: body]) { response ->
+            if (logEnable) log.debug("Login received response code ${response?.status}")
+            if (response?.status == 200) {
+                state.token            = response.data.access_token
+                state.refreshToken     = response.data.refresh_token
+                state.tokenExpiration  = now() + ((long)response.data.expires_in * 1000L)
+                state.tokenExpirationDate = new Date(state.tokenExpiration).toString()
+                state.userId           = extractUserIdFromJwt(state.token as String)
+                state.authenticated    = true
+                state.authenticationFailures = 0
+                if (logEnable) log.debug("authentication successful, userId: ${state.userId}")
+            } else {
+                log.error "Login Failed: (${response?.status}) ${response?.data}"
+                state.authenticated = false
+                state.authenticationFailures = (state.authenticationFailures >= 0 ? state.authenticationFailures + 1 : 0)
+            }
+        }
+    } catch (Exception e) {
+        log.error "Login exception: ${e}"
+        log.error "Login Failed: Please confirm your Flo Credentials"
+        state.authenticated = false
+        state.authenticationFailures = (state.authenticationFailures >= 0 ? state.authenticationFailures + 1 : 0)
+    }
+    if (logEnable) log.debug("failure count: ${state.authenticationFailures}")
+}
+
+def refreshToken() {
+    if (!state.refreshToken) {
+        if (logEnable) log.debug("No refresh token — falling back to full login")
+        authenticate()
+        return
+    }
+    if (logEnable) log.debug("refreshToken()")
+    def cid     = settings.clientId     ?: DEFAULT_CLIENT_ID
+    def csecret = settings.clientSecret ?: DEFAULT_CLIENT_SECRET
+    def body = "grant_type=refresh_token" +
+               "&refresh_token=${java.net.URLEncoder.encode(state.refreshToken as String, 'UTF-8')}" +
+               "&client_id=${cid}" +
+               "&client_secret=${csecret}"
+    def headers = ['Content-Type': 'application/x-www-form-urlencoded']
+    try {
+        httpPost([headers: headers, uri: AUTH_URL, body: body]) { response ->
+            if (response?.status == 200) {
+                state.token           = response.data.access_token
+                state.refreshToken    = response.data.refresh_token
+                state.tokenExpiration = now() + ((long)response.data.expires_in * 1000L)
+                state.tokenExpirationDate = new Date(state.tokenExpiration).toString()
+                state.authenticated   = true
+                state.authenticationFailures = 0
+                if (logEnable) log.debug("Token refreshed successfully")
+            } else {
+                log.warn "Token refresh failed (${response?.status}), falling back to full login"
+                authenticate()
+            }
+        }
+    } catch (Exception e) {
+        log.warn "Token refresh exception: ${e}, falling back to full login"
+        authenticate()
+    }
 }
 
 def getUserInfo() {
@@ -303,16 +359,15 @@ def getDeviceData(deviceId) {
 }
 
 def checkTokenLife() {
-    if (state.tokenExpiration){
-        remainingMinutes = (int)((new Date(state.tokenExpiration).getTime() - new Date().getTime())/1000/60)
+    if (state.tokenExpiration) {
+        remainingMinutes = (int)((state.tokenExpiration - now()) / 1000 / 60)
         if (logEnable) log.info "Moen API Token Life Remaining: ${remainingMinutes} minutes"
-    }
-    else {
+    } else {
         remainingMinutes = 0
     }
-    if (remainingMinutes < 60) {
+    if (remainingMinutes < 5) {
         log.debug("Moen API Token Life Remaining Minutes only ${remainingMinutes} -- refreshing")
-        authenticate()
+        refreshToken()
     }
     return remainingMinutes
 }
@@ -320,7 +375,7 @@ def checkTokenLife() {
 def makeAPIGet(uri, request_type, success_status = [200, 202], root_url = BASE_URL) {
     checkTokenLife()
     uri = (root_url) ? root_url + uri : uri
-    if (logEnable) log.debug "makeAPIGet: ${request_type} ${uri}"
+    if (logEnable) log.debug "makeAPIGet: ${request_type} ${uri} [Bearer ${(state.token as String)?.take(8)}...]"
 
     if (!settings.password) {
         log.error("User is Logged out. Return to the Moen Flo Manager App and login again to resume updates.");
@@ -336,7 +391,7 @@ def makeAPIGet(uri, request_type, success_status = [200, 202], root_url = BASE_U
     while (!response?.status && tries < max_tries) {
         def headers = [:]
         headers.put("Content-Type", "application/json")
-        headers.put("Authorization", state.token)
+        headers.put("Authorization", "Bearer ${state.token}")
 
         try {
             httpGet([headers: headers, uri: uri]) { resp -> def msg = ""
@@ -352,11 +407,12 @@ def makeAPIGet(uri, request_type, success_status = [200, 202], root_url = BASE_U
         catch (Exception e) {
             log.error "${request_type} Exception: ${e}"
             if (e.getMessage()?.contains("Forbidden") || e.getMessage()?.contains("Unauthorized")) {
-                log.debug "Forbidden/Unauthorized Exception..."
+                log.debug "Forbidden/Unauthorized on ${request_type}, trying token refresh"
+                refreshToken()
             } else {
                 log.error "${request_type} Failed ${e}"
+                authenticate()
             }
-            authenticate()
         }
         tries++
 
@@ -365,7 +421,7 @@ def makeAPIGet(uri, request_type, success_status = [200, 202], root_url = BASE_U
 }
 
 def makeAPIPost(uri, body, request_type, success_status = [200, 202], root_url = BASE_URL) {
-    if (logEnable) log.debug "makeAPIPost: ${request_type} ${uri}"
+    if (logEnable) log.debug "makeAPIPost: ${request_type} ${uri} [Bearer ${(state.token as String)?.take(8)}...]"
     checkTokenLife()
     uri = (root_url) ? root_url + uri : uri
     if (!settings.password) {
@@ -382,7 +438,7 @@ def makeAPIPost(uri, body, request_type, success_status = [200, 202], root_url =
     while (!response?.status && tries < max_tries) {
         def headers = [:]
         headers.put("Content-Type", "application/json")
-        headers.put("Authorization", state.token)
+        headers.put("Authorization", "Bearer ${state.token}")
 
         try {
             httpPostJson([headers: headers, uri: uri, body: body]) { resp -> def msg = ""
@@ -398,8 +454,8 @@ def makeAPIPost(uri, body, request_type, success_status = [200, 202], root_url =
         catch (Exception e) {
             log.error "${request_type} Exception: ${e}"
             if (e.getMessage().contains("Forbidden") || e.getMessage().contains("Unauthorized")) {
-                log.debug "Forbidden/Unauthorized Exception... Refreshing token..."
-                authenticate()
+                log.debug "Forbidden/Unauthorized on ${request_type}, trying token refresh"
+                refreshToken()
             }
         }
         tries++
@@ -523,6 +579,7 @@ void appButtonHandler(btn) {
       break
     case "btnInvalidToken":
       state.token = '9999999999999999'
+      state.refreshToken = null
       break
     case "btnSetupAllDevices":
       setupAllDevices()

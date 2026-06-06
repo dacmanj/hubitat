@@ -20,7 +20,7 @@ function findEntry(relpath) {
   if (!hub) { console.error(`No .hubitat.json entry for hub ${HUB_HOST}`); return null; }
   const entry = hub[relpath];
   if (!entry) return null;
-  const type = relpath.split('/')[0].replace(/s$/, ''); // "drivers" → "driver"
+  const type = relpath.split('/')[1].replace(/s$/, ''); // "apps" → "app", "drivers" → "driver"
   return { type, id: entry.id };
 }
 
@@ -35,7 +35,7 @@ function get(endpoint) {
   });
 }
 
-function post(endpoint, body) {
+function post(endpoint, body, contentType = 'application/x-www-form-urlencoded') {
   return new Promise((resolve, reject) => {
     const parsed = new URL(endpoint);
     const data = Buffer.from(body, 'utf8');
@@ -44,7 +44,7 @@ function post(endpoint, body) {
       port:     parsed.port || 80,
       path:     parsed.pathname,
       method:   'POST',
-      headers:  { 'Content-Type': 'application/json', 'Content-Length': data.length },
+      headers:  { 'Content-Type': contentType, 'Content-Length': data.length },
     }, (res) => {
       let buf = '';
       res.on('data', chunk => buf += chunk);
@@ -71,24 +71,30 @@ async function deploy(filepath) {
     }
     const { version } = JSON.parse(cur.body)[0];
     const source  = fs.readFileSync(filepath, 'utf8');
-    const payload = JSON.stringify({ id, source, version });
+    const payload = new URLSearchParams({ id: String(id), source, version: String(version) }).toString();
 
-    const res = await post(`${HUB_URL}/${type}/saveOrUpdateJson`, payload);
-    if (res.status >= 200 && res.status < 300) {
-      console.log(`[${type}] ${relpath} → v${version + 1} deployed`);
+    const res = await post(`${HUB_URL}/${type}/ajax/update`, payload);
+    let result;
+    try { result = JSON.parse(res.body); } catch { result = {}; }
+    if (res.status >= 200 && res.status < 300 && result.status !== 'error') {
+      console.log(`[${type}] ${relpath} → v${result.version ?? version + 1} deployed`);
     } else {
-      console.error(`[${type}] ${relpath} → FAILED HTTP ${res.status}: ${res.body}`);
+      console.error(`[${type}] ${relpath} → FAILED (HTTP ${res.status}): ${result.errorMessage ?? res.body}`);
     }
   } catch (err) {
     console.error(`[${type}] ${relpath} → ERROR: ${err.message}`);
   }
 }
 
-const pending = new Map();
-
-chokidar.watch('**/*.groovy', { ignoreInitial: true }).on('change', filepath => {
-  clearTimeout(pending.get(filepath));
-  pending.set(filepath, setTimeout(() => deploy(filepath), 300));
-});
-
-console.log(`Watching **/*.groovy — hub: ${HUB_URL}`);
+if (process.argv.includes('--all')) {
+  const hub = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'))[HUB_HOST];
+  if (!hub) { console.error(`No .hubitat.json entry for hub ${HUB_HOST}`); process.exit(1); }
+  Promise.all(Object.keys(hub).map(relpath => deploy(path.join(__dirname, relpath))));
+} else {
+  const pending = new Map();
+  chokidar.watch('**/*.groovy', { ignoreInitial: true }).on('change', filepath => {
+    clearTimeout(pending.get(filepath));
+    pending.set(filepath, setTimeout(() => deploy(filepath), 300));
+  });
+  console.log(`Watching **/*.groovy — hub: ${HUB_URL}`);
+}

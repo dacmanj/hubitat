@@ -84,8 +84,8 @@ def setMode(mode) {
     def uri = "/locations/${locationId}/systemMode"
     def body = [target:mode]
     if (mode == "sleep") {
-        body.put("revertMinutes", parent?.revertMinutes)
-        body.put("revertMode", parent?.revertMode)
+        body.put("revertMinutes", (parent?.revertMinutes ?: 120) as Integer)
+        body.put("revertMode", parent?.revertMode ?: "home")
     }
     def response = parent.makeAPIPost(uri, body, "Mode Update", [204])
     sendEvent(name: "mode", value: mode)

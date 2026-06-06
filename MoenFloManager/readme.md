@@ -41,6 +41,16 @@ This project is not affiliated with, endorsed or sponsored by Moen Inc nor Flo T
 
 All trademarks are reserved to their respective owners.
 ## Release Notes
+- 2026-06-05 - v1.0.18
+  - Migrate authentication to Moen OAuth2 API (`/api/v1/oauth2/token`), replacing the deprecated login endpoint
+  - Add token refresh using OAuth2 refresh token with automatic fallback to full re-authentication
+  - Existing installs self-heal on first poll after upgrade — no manual reauthentication required
+  - Fix sleep mode returning 400 error when revert settings had not been explicitly saved
+  - Restrict sleep mode revert time to valid API values: 2 hours, 24 hours, or 72 hours
+  - Add optional advanced settings for custom OAuth client ID/secret
+  - Fix logout button text color
+  - Add Bearer token prefix to debug log output for API calls
+
 - 2022-07-16 - v1.0.13
   - Fix release note date from v1.0.12
   - Remove stray debug log statement from location device driver
