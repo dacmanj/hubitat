@@ -247,7 +247,7 @@ def authenticate() {
             if (response?.status == 200) {
                 state.token            = response.data.access_token
                 state.refreshToken     = response.data.refresh_token
-                state.tokenExpiration  = System.currentTimeMillis() + ((long)response.data.expires_in * 1000L)
+                state.tokenExpiration  = now() + ((long)response.data.expires_in * 1000L)
                 state.tokenExpirationDate = new Date(state.tokenExpiration).toString()
                 state.userId           = extractUserIdFromJwt(state.token as String)
                 state.authenticated    = true
@@ -287,7 +287,7 @@ def refreshToken() {
             if (response?.status == 200) {
                 state.token           = response.data.access_token
                 state.refreshToken    = response.data.refresh_token
-                state.tokenExpiration = System.currentTimeMillis() + ((long)response.data.expires_in * 1000L)
+                state.tokenExpiration = now() + ((long)response.data.expires_in * 1000L)
                 state.tokenExpirationDate = new Date(state.tokenExpiration).toString()
                 state.authenticated   = true
                 state.authenticationFailures = 0
@@ -360,7 +360,7 @@ def getDeviceData(deviceId) {
 
 def checkTokenLife() {
     if (state.tokenExpiration) {
-        remainingMinutes = (int)((state.tokenExpiration - System.currentTimeMillis()) / 1000 / 60)
+        remainingMinutes = (int)((state.tokenExpiration - now()) / 1000 / 60)
         if (logEnable) log.info "Moen API Token Life Remaining: ${remainingMinutes} minutes"
     } else {
         remainingMinutes = 0
