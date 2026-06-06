@@ -96,17 +96,23 @@ Create a `.hubitat.json` file mapping source file paths to Hubitat driver/app ID
 
 ```json
 {
-  "MoenFloManager/apps/MoenDeviceManager.groovy": 123,
-  "MoenFloManager/drivers/MoenSmartShutoff.groovy": 456
+  "<hub-ip>": {
+    "MoenFloManager/apps/MoenDeviceManager.groovy": { "id": 123 },
+    "MoenFloManager/drivers/MoenSmartShutoff.groovy": { "id": 456 }
+  }
 }
 ```
 
-(Find the IDs in your hub's Apps Code / Drivers Code URLs.)
+Find the IDs in your hub's Apps Code / Drivers Code page URLs (the number at the end of the URL when you open a file).
 
-**Run:**
+**Commands:**
 
 ```bash
+# Watch for file changes and deploy automatically on save
 npm run watch
+
+# Push all files to the hub once (useful after pulling updates)
+npm run deploy
 ```
 
 ### Legacy Python Toolset
