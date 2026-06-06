@@ -74,11 +74,12 @@ async function deploy(filepath) {
     const payload = new URLSearchParams({ id: String(id), source, version: String(version) }).toString();
 
     const res = await post(`${HUB_URL}/${type}/ajax/update`, payload);
-    if (res.status >= 200 && res.status < 300) {
-      const newVersion = (() => { try { return JSON.parse(res.body).version; } catch { return version + 1; } })();
-      console.log(`[${type}] ${relpath} → v${newVersion} deployed`);
+    let result;
+    try { result = JSON.parse(res.body); } catch { result = {}; }
+    if (res.status >= 200 && res.status < 300 && result.status !== 'error') {
+      console.log(`[${type}] ${relpath} → v${result.version ?? version + 1} deployed`);
     } else {
-      console.error(`[${type}] ${relpath} → FAILED HTTP ${res.status}: ${res.body}`);
+      console.error(`[${type}] ${relpath} → FAILED (HTTP ${res.status}): ${result.errorMessage ?? res.body}`);
     }
   } catch (err) {
     console.error(`[${type}] ${relpath} → ERROR: ${err.message}`);
