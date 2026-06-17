@@ -53,20 +53,20 @@ If you prefer to install without HPM, import each file individually via your hub
 
 | Type | File | Import URL |
 |---|---|---|
-| App | MoenDeviceManager | `MoenFloManager/apps/MoenDeviceManager.groovy` |
-| App | MoenLocationInstance | `MoenFloManager/apps/MoenLocationInstance.groovy` |
-| App | MoenSmartShutoffInstance | `MoenFloManager/apps/MoenSmartShutoffInstance.groovy` |
-| App | MoenSmartWaterDetectorInstance | `MoenFloManager/apps/MoenSmartWaterDetectorInstance.groovy` |
-| Driver | MoenLocation | `MoenFloManager/drivers/MoenLocation.groovy` |
-| Driver | MoenSmartShutoff | `MoenFloManager/drivers/MoenSmartShutoff.groovy` |
-| Driver | MoenSmartWaterDetector *(optional)* | `MoenFloManager/drivers/MoenSmartWaterDetector.groovy` |
+| App | MoenDeviceManager | `https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/apps/MoenDeviceManager.groovy` |
+| App | MoenLocationInstance | `https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/apps/MoenLocationInstance.groovy` |
+| App | MoenSmartShutoffInstance | `https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/apps/MoenSmartShutoffInstance.groovy` |
+| App | MoenSmartWaterDetectorInstance | `https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/apps/MoenSmartWaterDetectorInstance.groovy` |
+| Driver | MoenLocation | `https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/drivers/MoenLocation.groovy` |
+| Driver | MoenSmartShutoff | `https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/drivers/MoenSmartShutoff.groovy` |
+| Driver | MoenSmartWaterDetector *(optional)* | `https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/drivers/MoenSmartWaterDetector.groovy` |
 
 **MoenFloStandalone** (legacy):
 
 | Type | File | Import URL |
 |---|---|---|
-| Driver | moenflo | `MoenFloStandalone/drivers/moenflo.groovy` |
-| Driver | moenflodetector | `MoenFloStandalone/drivers/moenflodetector.groovy` |
+| Driver | moenflo | `https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloStandalone/drivers/moenflo.groovy` |
+| Driver | moenflodetector | `https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloStandalone/drivers/moenflodetector.groovy` |
 
 To import: **Apps Code** (or **Drivers Code**) → **New** → **Import** → paste the raw GitHub URL → **Import** → **Save**.
 

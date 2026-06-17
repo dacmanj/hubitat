@@ -2,7 +2,7 @@
 This [Hubitat](https://hubitat.com/) app includes drivers for the [Moen Flo Smart Shutoff valve and Smart Water Detector](https://meetflo.com/).
 
 ## Installation
-[Hubitat Package Manager](https://github.com/dcmeglio/hubitat-packagemanager) is recommended for installing the App.
+[Hubitat Package Manager](https://github.com/HubitatCommunity/hubitatpackagemanager) is recommended for installing the App.
 
 When selecting the package to install either search by keyword for "Moen FLO" and selecting "Moen FLO Device Manager by David Manuel." You can also use "From a URL" and provide the manifest url directly (https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/packageManifest.json).
 
@@ -13,7 +13,7 @@ After you've installed Moen FLO Device Manager, you must go to the ***Moen FLO D
 1. Click "Setup All Devices" to autodiscover your devices and locations
 2. Create individual devices by clicking "Add Shutoff Valve," "Add Water Detector" or "Add Location"
 
-Location devices represent "locations in your Moen Flo account. This "virtual device" controls/reports your presence status (e.g. Home/Sleep/Away) and also reports a daily consumption running total.
+Location devices represent "locations" in your Moen Flo account. This "virtual device" controls/reports your presence status (e.g. Home/Sleep/Away) and also reports a daily consumption running total.
 
 ### Manual Installation
 
@@ -29,8 +29,8 @@ If not using Hubitat Package Manager, the groovy files in the ["apps" folder](ht
 ## Usage Notes
 - All data is obtained by polling the Moen API periodically. The frequency is set in the device settings in the device's app.
 - As a consequence of polling, it is not recommended to rely on the timing of the Moen water detectors to close the Moen valve. Moen's native capabilities will do that in near real time, but the device manager would take up to the entire polling interval to send a signal from a moen device. I built the integration so that I could use a bunch of existing zigbee leak detectors with the smart shutoff valve.
-- The shutoff valve capability works just like any other valve and can be opened or closed by HSM (e.g. when water is detected)
-- The mode (home, away and sleep) can be set using the device buttons or by "pushing" one of the three buttons in an automation rule. Button 1 is for "Home" mode, Button 2 is for "Away" mode, and Button 3 is for "Sleep" mode. You can also enable "Set this FLO Location to Away when Hubitat Safety Montor set to Armed Away" on the location device to automatically set Away based on Hubitat Safety Monitor's away mode. It will revert to "Home" when HSM disarms.
+- The shutoff valve capability works just like any other valve and can be opened or closed by Hubitat Safety Monitor (HSM) (e.g. when water is detected)
+- The mode (home, away and sleep) can be set using the device buttons or by "pushing" one of the three buttons in an automation rule. Button 1 is for "Home" mode, Button 2 is for "Away" mode, and Button 3 is for "Sleep" mode. You can also enable "Set this FLO Location to Away when Hubitat Safety Monitor set to Armed Away" on the location device to automatically set Away based on Hubitat Safety Monitor's away mode. It will revert to "Home" when HSM disarms.
 - The API requires a timeout value for "Sleep" mode to return to another mode. The default is to return to Home mode after 120 minutes, but can be changed in the location settings.
 - The Manual Health Test button performs a manual health test. The last result for a hubitat initiated health test will appear in the attributes on the next poll after the test is complete.
 ## License
@@ -40,6 +40,7 @@ Software distributed under the License is distributed on an "AS IS" BASIS, WITHO
 This project is not affiliated with, endorsed or sponsored by Moen Inc nor Flo Technologies, Inc.
 
 All trademarks are reserved to their respective owners.
+
 ## Release Notes
 - 2026-06-05 - v1.0.18
   - Migrate authentication to Moen OAuth2 API (`/api/v1/oauth2/token`), replacing the deprecated login endpoint

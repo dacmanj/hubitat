@@ -12,7 +12,7 @@ All trademarks are reserved to their respective owners.
 1. Go to "Drivers Code" in Hubitat
 2. Click New Driver
 3. Click Import
-4. Paste the install url into the text field: https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloSmartShutoff/moenflo.groovy
+4. Paste the install url into the text field: https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloStandalone/drivers/moenflo.groovy
 5. Click Import
 6. Click Save
 7. Go to Devices
