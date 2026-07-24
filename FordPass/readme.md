@@ -206,6 +206,9 @@ Originally developed in the `hubitat/` directory of [dacmanj/ha-fordpass](https:
 
 ## Release Notes
 
+- 2026-07-24 - v1.1.1
+  - Fix a `NullPointerException` in the FordPass Vehicle driver's `preferences` block (`settings.abrpEnabled` → `settings?.abrpEnabled`). This could make Hubitat Package Manager report "Failed to upgrade driver ... Be sure the package is not in use with devices" when updating from v1.1.0.
+
 - 2026-07-24 - v1.1.0
   - Moved ABRP (A Better Route Planner) live telemetry settings from the FordPass Connect app to the FordPass Vehicle device's own preferences, alongside its other per-vehicle settings (tire pressure/distance units). **If you had ABRP enabled before this update**, re-enable it and re-enter your token on the device's preferences page.
 
