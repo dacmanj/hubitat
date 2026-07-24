@@ -132,7 +132,7 @@ metadata {
             defaultValue:   false,
             submitOnChange: true
         )
-        if (settings.abrpEnabled) {
+        if (settings?.abrpEnabled) {
             input(
                 name:     "abrpToken",
                 type:     "text",
