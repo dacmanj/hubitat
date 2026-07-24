@@ -1,10 +1,10 @@
 {
   "packageName": "FordPass Connect",
   "author": "David Manuel",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "minimumHEVersion": "2.3.0",
   "dateReleased": "2026-07-24",
-  "releaseNotes": "v1.0.0: Initial release. Hubitat port of marq24/ha-fordpass (Home Assistant integration) — OAuth PKCE auth, vehicle polling, lock/unlock, remote start, guard mode, preconditioning, and optional ABRP (A Better Route Planner) live telemetry push.",
+  "releaseNotes": "v1.1.0: Moved ABRP (A Better Route Planner) live telemetry settings from the FordPass Connect app to the FordPass Vehicle device — if you had ABRP enabled before this update, re-enable it and re-enter your token on the device's preferences page. No other changes.",
   "documentationLink": "https://github.com/dacmanj/hubitat/tree/main/FordPass#readme",
   "licenseFile": "https://raw.githubusercontent.com/dacmanj/hubitat/main/FordPass/license.txt",
   "apps": [
