@@ -21,8 +21,19 @@
       "location": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/packageManifest.json",
       "description": "The device manager enables quick-setup and shared credentials for all your Moen FLO devices.<br>Hubitat Integration for the Moen Flo Devices (Smart Shutoff and Smart Shutoff Valve). See readme at https://dcmanjr.com/flo",
       "tags": [
-        "Water", 
+        "Water",
         "Monitoring"
+      ]
+    },
+    {
+      "id": "2cc0fb5a-d325-4904-8831-7b049562a965",
+      "name": "FordPass Connect",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/dacmanj/hubitat/main/FordPass/packageManifest.json",
+      "description": "Hubitat port of marq24/ha-fordpass. Connect Ford and Lincoln vehicles: lock/unlock, remote start, guard mode, preconditioning, door/window/tire status, GPS presence, and optional ABRP (A Better Route Planner) live telemetry push.",
+      "tags": [
+        "Vehicle",
+        "Integrations"
       ]
     }
   ]

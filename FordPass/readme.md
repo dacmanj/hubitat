@@ -15,11 +15,25 @@ Hubitat port of [marq24/ha-fordpass](https://github.com/marq24/ha-fordpass), bri
 
 ## Installation
 
-Install both files via the Hubitat Package Manager (HPM) or manually:
+### Hubitat Package Manager (recommended)
 
-1. **Drivers Code** → paste `FordPassVehicle.groovy` → Save
-2. **Apps Code** → paste `FordPassConnect.groovy` → Save
-3. **Apps** → **Add User App** → **FordPass Connect**
+[Hubitat Package Manager (HPM)](https://github.com/HubitatCommunity/hubitatpackagemanager) handles installation and future updates automatically.
+
+1. If you don't have HPM installed yet, see the [HPM repo](https://github.com/HubitatCommunity/hubitatpackagemanager) for setup instructions.
+2. Open HPM on your hub and choose **Install**.
+3. Search for **FordPass Connect**.
+4. Follow the prompts to install.
+
+### Manual Installation
+
+Import each file individually via your hub's code editor (**Apps Code** / **Drivers Code** → **New** → **Import** → paste the raw GitHub URL → **Import** → **Save**):
+
+| Type | File | Import URL |
+|---|---|---|
+| Driver | FordPassVehicle | `https://raw.githubusercontent.com/dacmanj/hubitat/main/FordPass/drivers/FordPassVehicle.groovy` |
+| App | FordPassConnect | `https://raw.githubusercontent.com/dacmanj/hubitat/main/FordPass/apps/FordPassConnect.groovy` |
+
+Then: **Apps** → **Add User App** → **FordPass Connect**.
 
 ---
 
@@ -184,3 +198,5 @@ Set the hub's location under **Settings → Location** in Hubitat. The driver co
 ## Credits
 
 Ported from [marq24/ha-fordpass](https://github.com/marq24/ha-fordpass). All API behavior, data structures, and auth flow are derived from that Home Assistant integration.
+
+Originally developed in the `hubitat/` directory of [dacmanj/ha-fordpass](https://github.com/dacmanj/ha-fordpass) (a fork of marq24/ha-fordpass), which cross-references the Home Assistant integration's Python source when diagnosing Ford API changes. Moved here to live alongside this author's other published Hubitat packages; the fork remains useful as a reference when the Ford API changes.

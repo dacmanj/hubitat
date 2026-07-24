@@ -4,10 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Hubitat home automation drivers/apps for the Moen Flo Smart Shutoff valve and Smart Water Detector. The Groovy code runs on a Hubitat hub (not locally); the Python toolset syncs files between this repo and a live hub.
+Hubitat home automation drivers/apps published by David Manuel, distributed via Hubitat Package Manager. Each top-level folder is an independent package with its own `packageManifest.json`. The Groovy code runs on a Hubitat hub (not locally); the Python/Node tooling syncs files between this repo and a live hub.
 
-## Two Packages
+## Packages
 
+- **FordPass/** — Ford/Lincoln connected vehicle integration. `apps/FordPassConnect.groovy` handles OAuth PKCE auth, token management, and polling the Ford/Autonomic APIs; `drivers/FordPassVehicle.groovy` is the child device driver (lock/unlock, remote start, guard mode, preconditioning, vehicle status, optional ABRP live telemetry push). Namespace is `fordpass-hubitat` (not `dacmanj`) — do not change this, it would orphan existing installs. Ported from [marq24/ha-fordpass](https://github.com/marq24/ha-fordpass); originally developed in the `hubitat/` directory of [dacmanj/ha-fordpass](https://github.com/dacmanj/ha-fordpass), which is still useful as a reference when diagnosing Ford API changes (it retains the Python HA integration this was ported from). Licensed under Apache 2.0 (see `FordPass/license.txt`), unlike the Moen packages below.
 - **MoenFloManager/** — Active package. Multi-app architecture: a parent app (`MoenDeviceManager`) manages child app instances (`MoenLocationInstance`, `MoenSmartShutoffInstance`, `MoenSmartWaterDetectorInstance`) and their corresponding drivers. Polls `https://api-gw.meetflo.com/api/v2`.
 - **MoenFloStandalone/** — Legacy standalone driver only. Bug fixes only; no new features.
 
@@ -49,7 +50,7 @@ VS Code tasks (`Terminal > Run Task`) also expose "Upload to Hubitat" and "Retri
 
 ## Groovy / Hubitat Conventions
 
-- Namespace for all files: `dacmanj`
+- Namespace for Moen files: `dacmanj`. FordPass uses `fordpass-hubitat` instead (inherited from its origin as a standalone port) — keep package namespaces as-is rather than unifying them, since changing a namespace breaks existing installs.
 - Device type→driver/app mapping is in `@Field final Map driverMap` / `appMap` in `MoenDeviceManager.groovy`
 - `packageManifest.json` in each package root is what Hubitat Package Manager uses — keep UUIDs stable; bump `version` on releases
 - The Smart Water Detector driver (`MoenSmartWaterDetector.groovy`) is marked `required: false` in the manifest — it's optional
