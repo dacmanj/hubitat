@@ -1,17 +1,22 @@
-# Moen Flo for Hubitat
+# Hubitat Apps & Drivers by David Manuel
 
-Groovy drivers and apps that integrate [Moen FLO Smart Water](https://www.moenflo.com/) devices with a [Hubitat](https://hubitat.com/) hub. Communicates with the Moen Flo cloud API to monitor water usage, pressure, temperature, and control your shutoff valve — all from within Hubitat.
+Groovy drivers and apps for [Hubitat](https://hubitat.com/) hubs, published here and distributed via [Hubitat Package Manager](https://github.com/HubitatCommunity/hubitatpackagemanager).
 
 ---
 
 ## Packages
 
-There are two packages. **MoenFloManager is recommended** for all new installs.
-
 | Package | Status | Description |
 |---|---|---|
-| [MoenFloManager](MoenFloManager/) | Active — new features | Multi-app architecture supporting all three Flo device types |
-| [MoenFloStandalone](MoenFloStandalone/) | Legacy — bug fixes only | Single standalone driver for the Smart Shutoff valve |
+| [FordPass](FordPass/) | Active | Ford/Lincoln connected vehicle integration — lock/unlock, remote start, guard mode, preconditioning, vehicle status, and optional ABRP live telemetry |
+| [MoenFloManager](MoenFloManager/) | Active — new features | Multi-app architecture supporting all three Moen Flo device types |
+| [MoenFloStandalone](MoenFloStandalone/) | Legacy — bug fixes only | Single standalone driver for the Moen Flo Smart Shutoff valve |
+
+---
+
+## Moen Flo for Hubitat
+
+Communicates with the Moen Flo cloud API to monitor water usage, pressure, temperature, and control your shutoff valve — all from within Hubitat.
 
 ---
 
@@ -143,6 +148,13 @@ DIRECTION=upload
 ## Repository Structure
 
 ```
+FordPass/
+  apps/
+    FordPassConnect.groovy
+  drivers/
+    FordPassVehicle.groovy
+  packageManifest.json
+
 MoenFloManager/
   apps/
     MoenDeviceManager.groovy
@@ -161,7 +173,7 @@ MoenFloStandalone/
     moenflodetector.groovy
   packageManifest.json
 
-tools/                              ← legacy Python toolset
+tools/                              ← legacy Python toolset (Moen packages)
 deploy.js                           ← Node.js watch/deploy script
 ```
 
@@ -169,8 +181,8 @@ deploy.js                           ← Node.js watch/deploy script
 
 ## License
 
-Moen Flo for Hubitat by [David Manuel](https://github.com/dacmanj) is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0).
+Each package is licensed individually — see the `license.txt` in its own folder. The Moen Flo packages by [David Manuel](https://github.com/dacmanj) are licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0). FordPass is a derivative of [marq24/ha-fordpass](https://github.com/marq24/ha-fordpass) and remains under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
-Software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND. See the license for details.
+Software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND. See each license for details.
 
-> This project is not affiliated with, endorsed by, or sponsored by Moen Inc. or Flo Technologies, Inc. All trademarks are reserved to their respective owners.
+> This project is not affiliated with, endorsed by, or sponsored by Moen Inc., Flo Technologies, Inc., Ford Motor Company, or Lincoln. All trademarks are reserved to their respective owners.
