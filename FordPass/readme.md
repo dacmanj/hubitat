@@ -201,3 +201,13 @@ Set the hub's location under **Settings → Location** in Hubitat. The driver co
 Ported from [marq24/ha-fordpass](https://github.com/marq24/ha-fordpass). All API behavior, data structures, and auth flow are derived from that Home Assistant integration.
 
 Originally developed in the `hubitat/` directory of [dacmanj/ha-fordpass](https://github.com/dacmanj/ha-fordpass) (a fork of marq24/ha-fordpass), which cross-references the Home Assistant integration's Python source when diagnosing Ford API changes. Moved here to live alongside this author's other published Hubitat packages; the fork remains useful as a reference when the Ford API changes.
+
+---
+
+## Release Notes
+
+- 2026-07-24 - v1.1.0
+  - Moved ABRP (A Better Route Planner) live telemetry settings from the FordPass Connect app to the FordPass Vehicle device's own preferences, alongside its other per-vehicle settings (tire pressure/distance units). **If you had ABRP enabled before this update**, re-enable it and re-enter your token on the device's preferences page.
+
+- 2026-07-24 - v1.0.0
+  - Initial release. Hubitat port of marq24/ha-fordpass — OAuth PKCE auth, vehicle polling, lock/unlock, remote start, guard mode, preconditioning, and optional ABRP live telemetry push.
