@@ -382,6 +382,7 @@ private void parseMetrics(def metrics) {
     safeVal(metrics, "xevBatteryRange")  { v -> sendEvent(name: "batteryRange", value: convertDistance(v), unit: settings.distanceUnit ?: "miles") }
     safeVal(metrics, "xevPlugChargerStatus")          { v -> sendEvent(name: "plugStatus",     value: v?.toString()) }
     safeVal(metrics, "xevBatteryChargeDisplayStatus") { v -> sendEvent(name: "chargingStatus", value: v?.toString()) }
+    parseChargingPower(metrics)
 
     safeVal(metrics, "ignitionStatus")   { v ->
         sendEvent(name: "ignition", value: v?.toString())
@@ -412,6 +413,42 @@ private void parseMetrics(def metrics) {
 
     // GPS: metrics.position.value.location → {lat, lon, alt}
     parsePosition(metrics.position?.value?.location)
+}
+
+/**
+ * Ford doesn't expose a "charging power" metric directly — compute it from
+ * charger voltage × current, mirroring
+ * fordpass_handler.py::_get_eleveh_charging_power_from_metrics(). Only
+ * meaningful while plugged in; there's no equivalent traction/motor power
+ * metric while driving.
+ *
+ * AC charging reports both xevBatteryChargerVoltageOutput and
+ * ...CurrentOutput. DC fast charging often reports 0 for charger current, so
+ * fall back to the battery-side xevBatteryIoCurrent (which can be negative —
+ * use its magnitude).
+ */
+private void parseChargingPower(def metrics) {
+    def voltRaw = metrics.xevBatteryChargerVoltageOutput?.value
+    def ampsRaw = metrics.xevBatteryChargerCurrentOutput?.value
+    if (voltRaw == null || ampsRaw == null) return
+
+    try {
+        BigDecimal volts = voltRaw as BigDecimal
+        BigDecimal amps  = ampsRaw as BigDecimal
+
+        BigDecimal kw
+        if (volts != 0 && amps != 0) {
+            kw = (volts * amps) / 1000
+        } else if (volts != 0 && metrics.xevBatteryIoCurrent?.value != null) {
+            BigDecimal battAmps = (metrics.xevBatteryIoCurrent.value as BigDecimal).abs()
+            kw = battAmps != 0 ? (volts * battAmps) / 1000 : 0
+        } else {
+            kw = 0
+        }
+        sendEvent(name: "chargingPower", value: kw.setScale(2, BigDecimal.ROUND_HALF_UP), unit: "kW")
+    } catch (Exception e) {
+        logDebug("parseChargingPower: ${e.message}")
+    }
 }
 
 private void parseDoorLockArray(def lockList) {

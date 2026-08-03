@@ -68,6 +68,13 @@ endpoint (`api.iternio.com/1/tlm/send`) right after each scheduled poll — so t
 matches the app's **Polling Interval** setting. This lives on the device (not the app) alongside its
 other per-vehicle preferences, like tire pressure and distance units.
 
+**About ABRP's "reference consumption confidence":** we intentionally don't send a `power` field.
+ABRP's consumption model is calibrated primarily from live power draw while driving, and Ford's API
+doesn't expose that for the Mach-E (or any Ford EV) — only SOC. ABRP will show a lower confidence
+percentage for this reason; it's a limitation of what Ford's API exposes, not something this
+integration can improve, and it will slowly climb as ABRP accumulates more SOC-vs-distance data
+across trips.
+
 ---
 
 ## Supported Vehicles
@@ -205,6 +212,9 @@ Originally developed in the `hubitat/` directory of [dacmanj/ha-fordpass](https:
 ---
 
 ## Release Notes
+
+- 2026-07-24 - v1.2.0
+  - `chargingPower` is now populated (previously declared but never wired up) — computed from `xevBatteryChargerVoltageOutput` × `xevBatteryChargerCurrentOutput`, falling back to `xevBatteryIoCurrent` for DC fast charging. Only available while plugged in; Ford's API doesn't expose an equivalent power metric while driving, so this doesn't change ABRP's live-data consumption confidence — see [ABRP Live Data](#abrp-live-data-optional).
 
 - 2026-07-24 - v1.1.1
   - Fix a `NullPointerException` in the FordPass Vehicle driver's `preferences` block (`settings.abrpEnabled` → `settings?.abrpEnabled`). This could make Hubitat Package Manager report "Failed to upgrade driver ... Be sure the package is not in use with devices" when updating from v1.1.0.
