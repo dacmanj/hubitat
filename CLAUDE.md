@@ -66,3 +66,10 @@ When bumping the version for a package, always update release notes in both plac
 Also update the Node.js deploy tooling if relevant:
 - `npm run deploy` — pushes all files to the hub at once (uses `.hubitat.json` for the id mapping)
 - `npm run watch` — watches for file changes and deploys automatically
+
+## Development Workflow
+
+- Always upload changes to the local hub before considering a change done — use `npm run deploy` (one-shot) or `npm run watch` (watches and deploys on save) so the hub reflects what's under review.
+- Always make changes on a branch, never commit directly to `main`.
+- Every release/update goes through a pull request — push the branch and open a PR rather than merging locally.
+- Final verification of a release is a manual step done by David through Hubitat Package Manager (installing/updating the package on his hub from the merged package repo) — this is separate from, and in addition to, `npm run deploy`/`watch` during development, and Claude cannot do it.
