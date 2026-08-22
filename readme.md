@@ -122,17 +122,17 @@ npm run deploy
 
 ### Legacy Python Toolset
 
-A Poetry-based toolset in `tools/` supports manual upload and retrieve operations.
+A uv-based toolset in `tools/` supports manual upload and retrieve operations.
 
 ```bash
 # Install dependencies
-poetry install
+uv sync
 
 # Upload local files to hub
-python tools/uploader.py MoenFloManager upload
+uv run python tools/uploader.py MoenFloManager upload
 
 # Retrieve files from hub to local
-python tools/uploader.py MoenFloManager retrieve
+uv run python tools/uploader.py MoenFloManager retrieve
 ```
 
 Requires a `.env` file:
