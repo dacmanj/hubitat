@@ -224,7 +224,6 @@ def authenticate() {
     def uri = AUTH_URL
     if (!password) {
         log.info("Login Skipped: No password")
-        state.authenticationFailures = 99
         return
     }
     if (state.authenticationFailures >= 3) {

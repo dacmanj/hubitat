@@ -42,6 +42,10 @@ This project is not affiliated with, endorsed or sponsored by Moen Inc nor Flo T
 All trademarks are reserved to their respective owners.
 
 ## Release Notes
+- 2026-08-22 - v1.0.19
+  - Fix login page falsely reporting "Invalid credentials" after logout or on first load with no password entered yet
+  - Fix resulting lockout that blocked the next real login attempt from ever calling the Moen API
+
 - 2026-06-05 - v1.0.18
   - Migrate authentication to Moen OAuth2 API (`/api/v1/oauth2/token`), replacing the deprecated login endpoint
   - Add token refresh using OAuth2 refresh token with automatic fallback to full re-authentication
