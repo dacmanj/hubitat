@@ -14,9 +14,9 @@ Hubitat home automation drivers/apps published by David Manuel, distributed via 
 
 ## Python Toolset (`tools/`)
 
-Syncs Groovy source files to/from a live Hubitat hub over HTTP. Requires a `.env` file (gitignored) with:
+Syncs Groovy source files to/from a live Hubitat hub over HTTP. Shares a single gitignored `.env` file at the repo root with the Node.js deploy tooling (`npm run deploy` / `npm run watch`, see below) — both read `HUBITAT_URL`:
 ```
-HUBITAT=<hub-ip>
+HUBITAT_URL=http://<hub-ip>
 TARGET=MoenFloManager
 DIRECTION=upload   # or retrieve
 AUTOUPLOAD=false

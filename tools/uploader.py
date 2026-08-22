@@ -15,8 +15,8 @@ if __name__ == "__main__":
         direction = os.getenv('DIRECTION')
         auto_upload = os.getenv('AUTOUPLOAD').lower() == 'true'
 
-    ip = os.getenv('HUBITAT')
-    s = create_hubitat_session(ip)
+    hub_url = os.getenv('HUBITAT_URL')
+    s = create_hubitat_session(hub_url)
     api = HubitatAPIWrapper(s)
     hfm = HubitatFileManager(api, package_name)
 

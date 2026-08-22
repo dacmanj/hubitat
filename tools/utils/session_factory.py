@@ -12,6 +12,7 @@ class SessionWrapper(Session):
         return super(SessionWrapper, self).request(method, url, *args, **kwargs)
 
 
-def create_hubitat_session(ip):
-    ip.replace('http://', '')
-    return SessionWrapper(f"http://{ip}")
+def create_hubitat_session(hub_url):
+    if not hub_url.startswith('http://') and not hub_url.startswith('https://'):
+        hub_url = f"http://{hub_url}"
+    return SessionWrapper(hub_url.rstrip('/'))

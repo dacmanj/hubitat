@@ -122,7 +122,7 @@ npm run deploy
 
 ### Legacy Python Toolset
 
-A uv-based toolset in `tools/` supports manual upload and retrieve operations.
+A uv-based toolset in `tools/` supports manual upload and retrieve operations, and shares the same `.env` file as `deploy.js` above (both read `HUBITAT_URL`).
 
 ```bash
 # Install dependencies
@@ -135,13 +135,16 @@ uv run python tools/uploader.py MoenFloManager upload
 uv run python tools/uploader.py MoenFloManager retrieve
 ```
 
-Requires a `.env` file:
+Also supports auto-upload on file change, add to `.env`:
 
 ```
-HUBITAT=<hub-ip>
+HUBITAT_URL=http://<hub-ip>
 TARGET=MoenFloManager
 DIRECTION=upload
+AUTOUPLOAD=true
 ```
+
+then run `uv run python tools/uploader.py` (no arguments).
 
 ---
 
