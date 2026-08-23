@@ -4,7 +4,7 @@
   "version": "1.0.20",
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2026-08-23",
-  "releaseNotes": "v1.0.20: Fixes device discovery finding nothing after login (\"Setup All Devices\"/\"Add Shutoff Valve\" empty) — the OAuth2 JWT userId extraction was only checking claims named `userId`/`sub`, but Moen's token uses `user_id`. Also fixes API error logging that previously always showed \"Failed (null): null\" instead of the real status/response, and adds discovery diagnostics.\n\nSee full release notes at https://github.com/dacmanj/hubitat/tree/main/MoenFloManager#release-notes",
+  "releaseNotes": "v1.0.20: Fixes device discovery finding nothing after login (\"Setup All Devices\"/\"Add Shutoff Valve\" empty) — the OAuth2 JWT userId extraction was only checking claims named `userId`/`sub`, but Moen's token uses `user_id`. Also fixes API error logging that previously always showed \"Failed (null): null\" instead of the real status/response, and adds discovery diagnostics. IMPORTANT: if you were already logged in before this update, click \"Reset All Caches\" under Diagnostics (or logout/login) once to pick up the fix.\n\nSee full release notes at https://github.com/dacmanj/hubitat/tree/main/MoenFloManager#release-notes",
   "communityLink": "https://community.hubitat.com/t/moen-flo-virtual-device/9677",
   "documentationLink": "https://github.com/dacmanj/hubitat/tree/main/MoenFloManager#readme",
   "licenseFile": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/license.txt",

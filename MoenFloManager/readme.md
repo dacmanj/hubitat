@@ -47,6 +47,7 @@ All trademarks are reserved to their respective owners.
   - Fix `makeAPIGet` error logging always showing "Failed (null): null" instead of the real HTTP status/response, which masked the cause of device discovery failures
   - Add diagnostic logging when JWT userId extraction fails (blocks all user/location/device API calls)
   - Add a device/location discovery summary log line
+  - **If you were already logged in before updating to v1.0.20**, the app won't automatically re-run the fixed userId extraction (it only runs on login). Click **"Reset All Caches"** under Diagnostics (or logout/login) once after updating to pick up the fix.
 
 - 2026-08-22 - v1.0.19
   - Fix login page falsely reporting "Invalid credentials" after logout or on first load with no password entered yet
