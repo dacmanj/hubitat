@@ -211,7 +211,11 @@ def extractUserIdFromJwt(String jwt) {
         def padded = payload + ('=' * padding)
         def decoded = new String(padded.replace('-', '+').replace('_', '/').decodeBase64())
         def json = new groovy.json.JsonSlurper().parseText(decoded)
-        return json.userId ?: json.sub
+        def userId = json.user_id ?: json.userId ?: json.sub ?: json.user?.user_id ?: json.user?.id
+        if (!userId) {
+            log.error "Failed to extract userId from JWT: no known claim found. Top-level claims present: ${json.keySet()}"
+        }
+        return userId
     } catch (Exception e) {
         log.error "Failed to extract userId from JWT: ${e}"
         return null
@@ -308,6 +312,10 @@ def getUserInfo() {
       return
   }
   def userId = state.userId
+  if (!userId) {
+    log.error "getUserInfo: state.userId is not set (JWT extraction likely failed) — cannot fetch user/location/device data"
+    return
+  }
   def uri = "/users/${userId}?expand=locations,alarmSettings"
   def response = makeAPIGet(uri, "Get User Info")
   if (response.data) {
@@ -343,6 +351,7 @@ def discoverDevices() {
   state.userData?.locations = locations
   state.devicesCache = devicesCache
   state.locationsCache = locationsCache
+  log.info "discoverDevices: found ${devicesCache.size()} device(s) across ${locationsCache.size()} location(s)"
 }
 
 def getLocationData(locationId) {
@@ -399,7 +408,7 @@ def makeAPIGet(uri, request_type, success_status = [200, 202], root_url = BASE_U
                     response = resp;
                 }
                 else {
-                    log.error "${request_type} Failed (${response.status}): ${response.data}"
+                    log.error "${request_type} Failed (${resp?.status}): ${resp?.data}"
                 }
               }
         }
