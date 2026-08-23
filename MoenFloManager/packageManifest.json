@@ -1,10 +1,10 @@
 {
   "packageName": "Moen FLO Device Manager",
   "author": "David Manuel",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2026-08-22",
-  "releaseNotes": "v1.0.19: Fixes a bug where logging out (or loading the login page with no password yet) falsely set the authentication failure count, showing a spurious \"Invalid credentials\" error and blocking the next real login attempt.\n\nSee full release notes at https://github.com/dacmanj/hubitat/tree/main/MoenFloManager#release-notes",
+  "dateReleased": "2026-08-23",
+  "releaseNotes": "v1.0.20: Fixes a logging bug where failed API calls (e.g. fetching user/location/device data) always logged \"Failed (null): null\" instead of the real HTTP status and response, masking the cause of device discovery failures. Adds diagnostic logging for JWT userId extraction failures and a device/location discovery summary.\n\nSee full release notes at https://github.com/dacmanj/hubitat/tree/main/MoenFloManager#release-notes",
   "communityLink": "https://community.hubitat.com/t/moen-flo-virtual-device/9677",
   "documentationLink": "https://github.com/dacmanj/hubitat/tree/main/MoenFloManager#readme",
   "licenseFile": "https://raw.githubusercontent.com/dacmanj/hubitat/main/MoenFloManager/license.txt",
