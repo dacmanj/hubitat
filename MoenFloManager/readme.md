@@ -43,7 +43,8 @@ All trademarks are reserved to their respective owners.
 
 ## Release Notes
 - 2026-08-23 - v1.0.20
-  - Fix `makeAPIGet` error logging always showing "Failed (null): null" instead of the real HTTP status/response, which masked the cause of device discovery failures ("Setup All Devices" / "Add Shutoff Valve" finding nothing)
+  - Fix device discovery ("Setup All Devices" / "Add Shutoff Valve") finding nothing after login — OAuth2 JWT userId extraction only checked `userId`/`sub` claims, but Moen's token uses `user_id`
+  - Fix `makeAPIGet` error logging always showing "Failed (null): null" instead of the real HTTP status/response, which masked the cause of device discovery failures
   - Add diagnostic logging when JWT userId extraction fails (blocks all user/location/device API calls)
   - Add a device/location discovery summary log line
 
