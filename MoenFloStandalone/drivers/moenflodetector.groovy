@@ -119,10 +119,7 @@ def getDeviceInfo() {
         sendEvent(name: "humidity", value: round(data?.telemetry?.current?.humidity, 0), unit: "%")
         sendEvent(name: "battery", value: round(data?.battery?.level, 0), unit: "%")
         def water_state = data?.fwProperties?.telemetry_water
-        def WATER_STATES = [1: "wet", 2: "dry"]
-        if (water_state) {
-            sendEvent(name: "water", value: WATER_STATES[1])}
-        else { sendEvent(name: "water", value: WATER_STATES[2])}            
+        sendEvent(name: "water", value: water_state ? "wet" : "dry")
         sendEvent(name: "updated", value: data?.telemetry?.current?.updated)
         sendEvent(name: "rssi", value: data?.fwProperties?.telemetry_rssi)
         sendEvent(name: "ssid", value: data?.fwProperties?.wifi_sta_ssid)
