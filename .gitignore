@@ -5,3 +5,5 @@ tools/data
 node_modules/
 dist/
 *.pyc
+.gradle/
+build/

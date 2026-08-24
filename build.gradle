@@ -1,0 +1,31 @@
+plugins {
+    id 'groovy'
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    testImplementation 'org.codehaus.groovy:groovy:3.0.21'
+    testImplementation 'org.spockframework:spock-core:2.3-groovy-3.0'
+    testImplementation 'com.github.eighty20results:hubitat_ci:v0.28.6'
+    testImplementation 'cglib:cglib-nodep:3.3.0'
+    testImplementation 'org.objenesis:objenesis:3.3'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        exceptionFormat 'full'
+    }
+    // hubitat_ci's validator references a couple of JDK-internal classes by class literal
+    // (as part of a "known classes" table); JDK 16+'s strong encapsulation blocks that
+    // unless the owning packages are explicitly exported to the unnamed module.
+    jvmArgs(
+            '--add-exports=java.base/sun.util.calendar=ALL-UNNAMED',
+            '--add-exports=java.xml/com.sun.org.apache.xerces.internal.dom=ALL-UNNAMED',
+    )
+}
