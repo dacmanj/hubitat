@@ -67,6 +67,20 @@ Also update the Node.js deploy tooling if relevant:
 - `npm run deploy` — pushes all files to the hub at once (uses `.hubitat.json` for the id mapping)
 - `npm run watch` — watches for file changes and deploys automatically
 
+## Automated Testing
+
+Groovy unit tests run outside the hub via [Spock](https://spockframework.org/) and [hubitat_ci](https://github.com/eighty20results/hubitat_ci) (a fork of `biocomp/hubitat_ci`, consumed via JitPack since it isn't published to Maven Central). `hubitat_ci` loads a real driver/app `.groovy` file into a sandboxed `GroovyShell`, so tests exercise the actual source under `MoenFloManager/` — no separate test-only copy of the logic.
+
+```bash
+./gradlew test
+```
+
+- Test specs live under `src/test/groovy/`, mirroring package names loosely (e.g. `moenflomanager/MoenSmartShutoffSpec.groovy`).
+- `HubitatDeviceSandbox`/`HubitatAppSandbox` take the driver/app `File`, plus `api:` (a mocked `DeviceExecutor`/`AppExecutor` for `log`/`sendEvent`/`device`/etc.) and `parent:` (any duck-typed object standing in for the parent app/device — set directly via `script.setParent()`, not through the api mock).
+- `validationFlags` in `run(...)` control hubitat_ci's static validation (e.g. `Flags.DontRequireParseMethodInDevice` for drivers with no `parse()`, `Flags.DontValidateCapabilities` for capabilities newer than hubitat_ci's built-in table, `Flags.AllowWritingToSettings` for code that assigns to undeclared locals — Hubitat treats those as script-binding writes, which hubitat_ci treats as "settings" by default).
+- `build.gradle`'s `test.jvmArgs` add `--add-exports` for two JDK-internal packages hubitat_ci's validator references by class literal — required on JDK 16+, harmless on earlier JDKs.
+- This is best suited to pure-ish logic (parsing, unit conversion, state derivation) — most of what's in the drivers/apps. It's not a substitute for the manual Hubitat Package Manager verification step described below.
+
 ## Development Workflow
 
 - Always upload changes to the local hub before considering a change done — use `npm run deploy` (one-shot) or `npm run watch` (watches and deploys on save) so the hub reflects what's under review.

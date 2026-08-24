@@ -1,0 +1,348 @@
+{
+  "info": {
+    "_postman_id": "d3f1b2a4-6c7e-4a2b-9d8e-1f2a3b4c5d6e",
+    "name": "Moen Flo API (Debugging)",
+    "description": "Mirrors the endpoints used by MoenDeviceManager.groovy and its child apps, for inspecting raw API responses (e.g. device.fwProperties.telemetry_water) without going through Hubitat. Base URLs and the shared OAuth client_id/client_secret are taken directly from MoenFloManager/apps/MoenDeviceManager.groovy — they are already public in that open-source file, not real secrets. Fill in `username`/`password` in the collection variables (or an environment) before running Login.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{access_token}}", "type": "string" }
+    ]
+  },
+  "variable": [
+    { "key": "auth_url", "value": "https://api-gw.meetflo.com/api/v1/oauth2/token", "type": "string" },
+    { "key": "base_url", "value": "https://api-gw.meetflo.com/api/v2", "type": "string" },
+    { "key": "client_id", "value": "3baec26f-0e8b-4e1d-84b0-e178f05ea0a5", "type": "string" },
+    { "key": "client_secret", "value": "3baec26f-0e8b-4e1d-84b0-e178f05ea0a5", "type": "string" },
+    { "key": "username", "value": "", "type": "string" },
+    { "key": "password", "value": "", "type": "string" },
+    { "key": "access_token", "value": "", "type": "string" },
+    { "key": "refresh_token", "value": "", "type": "string" },
+    { "key": "user_id", "value": "", "type": "string" },
+    { "key": "location_id", "value": "", "type": "string" },
+    { "key": "device_id", "value": "", "type": "string", "description": "Set this to the water detector's device id to inspect its telemetry_water field" },
+    { "key": "health_test_id", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login (Password Grant)",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "grant_type", "value": "password", "type": "text" },
+                { "key": "username", "value": "{{username}}", "type": "text" },
+                { "key": "password", "value": "{{password}}", "type": "text" },
+                { "key": "client_id", "value": "{{client_id}}", "type": "text" },
+                { "key": "client_secret", "value": "{{client_secret}}", "type": "text" }
+              ]
+            },
+            "url": { "raw": "{{auth_url}}", "host": ["{{auth_url}}"] },
+            "description": "Mirrors MoenDeviceManager.groovy authenticate(). On success, saves access_token/refresh_token and decodes the JWT to pull user_id (same claim fallback order as extractUserIdFromJwt: user_id, userId, sub, user.user_id, user.id)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login succeeded', () => pm.response.code === 200);",
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json();",
+                  "    pm.collectionVariables.set('access_token', data.access_token);",
+                  "    pm.collectionVariables.set('refresh_token', data.refresh_token);",
+                  "    try {",
+                  "        const payload = data.access_token.split('.')[1];",
+                  "        const b64 = payload.replace(/-/g, '+').replace(/_/g, '/');",
+                  "        const padded = b64 + '='.repeat((4 - b64.length % 4) % 4);",
+                  "        const claims = JSON.parse(atob(padded));",
+                  "        const userId = claims.user_id || claims.userId || claims.sub || (claims.user && (claims.user.user_id || claims.user.id));",
+                  "        if (userId) {",
+                  "            pm.collectionVariables.set('user_id', userId);",
+                  "            console.log('Resolved user_id:', userId);",
+                  "        } else {",
+                  "            console.warn('Could not find a user id claim in JWT:', Object.keys(claims));",
+                  "        }",
+                  "    } catch (e) {",
+                  "        console.warn('Failed to decode JWT payload:', e);",
+                  "    }",
+                  "} else {",
+                  "    console.error('Login failed:', pm.response.text());",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "grant_type", "value": "refresh_token", "type": "text" },
+                { "key": "refresh_token", "value": "{{refresh_token}}", "type": "text" },
+                { "key": "client_id", "value": "{{client_id}}", "type": "text" },
+                { "key": "client_secret", "value": "{{client_secret}}", "type": "text" }
+              ]
+            },
+            "url": { "raw": "{{auth_url}}", "host": ["{{auth_url}}"] },
+            "description": "Mirrors MoenDeviceManager.groovy refreshToken()."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Refresh succeeded', () => pm.response.code === 200);",
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json();",
+                  "    pm.collectionVariables.set('access_token', data.access_token);",
+                  "    pm.collectionVariables.set('refresh_token', data.refresh_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "User & Discovery",
+      "item": [
+        {
+          "name": "Get User Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}?expand=locations,alarmSettings",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{user_id}}"],
+              "query": [
+                { "key": "expand", "value": "locations,alarmSettings" }
+              ]
+            },
+            "description": "Mirrors getUserInfo(). Response includes state.userData, e.g. unitSystem and the locations list."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json();",
+                  "    const firstLocation = data.locations && data.locations[0];",
+                  "    if (firstLocation && firstLocation.id) {",
+                  "        pm.collectionVariables.set('location_id', firstLocation.id);",
+                  "        console.log('Set location_id to', firstLocation.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Get Location (with devices)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/locations/{{location_id}}?expand=devices",
+              "host": ["{{base_url}}"],
+              "path": ["locations", "{{location_id}}"],
+              "query": [
+                { "key": "expand", "value": "devices" }
+              ]
+            },
+            "description": "Mirrors getLocationData(). Response's `devices` array has each device's id/nickname/deviceType — find the water detector (deviceType: puck_oem) here to get its id for device_id."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json();",
+                  "    const detector = (data.devices || []).find(d => d.deviceType === 'puck_oem');",
+                  "    if (detector) {",
+                  "        pm.collectionVariables.set('device_id', detector.id);",
+                  "        console.log('Set device_id to water detector', detector.id, detector.nickname);",
+                  "    } else {",
+                  "        console.log('No puck_oem device found in this location; devices:', (data.devices || []).map(d => `${d.nickname} (${d.deviceType})`));",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Get Device (raw telemetry)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/devices/{{device_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["devices", "{{device_id}}"]
+            },
+            "description": "Mirrors getDeviceData(). For a water detector, check response.fwProperties.telemetry_water directly -- this is the raw value MoenSmartWaterDetector.groovy reads to decide wet/dry."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json();",
+                  "    console.log('deviceType:', data.deviceType, ' nickname:', data.nickname);",
+                  "    console.log('fwProperties:', JSON.stringify(data.fwProperties, null, 2));",
+                  "    console.log('telemetry_water:', data.fwProperties && data.fwProperties.telemetry_water);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Alerts & Health Test",
+      "item": [
+        {
+          "name": "Get Alerts for Device",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/alerts?isInternalAlarm=false&deviceId={{device_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["alerts"],
+              "query": [
+                { "key": "isInternalAlarm", "value": "false" },
+                { "key": "deviceId", "value": "{{device_id}}" }
+              ]
+            },
+            "description": "Mirrors getLastDeviceAlert(deviceId) in MoenSmartShutoffInstance.groovy. Response.items[0] is the most recent alert (displayTitle/displayMessage/createAt)."
+          },
+          "response": []
+        },
+        {
+          "name": "Run Health Test (Shutoff only)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "" },
+            "url": {
+              "raw": "{{base_url}}/devices/{{device_id}}/healthTest/run",
+              "host": ["{{base_url}}"],
+              "path": ["devices", "{{device_id}}", "healthTest", "run"]
+            },
+            "description": "Mirrors manualHealthTest() in MoenSmartShutoff.groovy. Only applies to Smart Shutoff valve devices."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 202) {",
+                  "    const data = pm.response.json();",
+                  "    if (data.roundId) {",
+                  "        pm.collectionVariables.set('health_test_id', data.roundId);",
+                  "        console.log('Set health_test_id to', data.roundId);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Get Health Test Result",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/devices/{{device_id}}/healthTest/{{health_test_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["devices", "{{device_id}}", "healthTest", "{{health_test_id}}"]
+            },
+            "description": "Mirrors getHealthTestInfo() in MoenSmartShutoff.groovy."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Shutoff Valve",
+      "item": [
+        {
+          "name": "Open Valve",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"valve\": {\n    \"target\": \"open\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/devices/{{device_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["devices", "{{device_id}}"]
+            },
+            "description": "Mirrors valveUpdate('open') in MoenSmartShutoff.groovy. Only applies to Smart Shutoff valve devices."
+          },
+          "response": []
+        },
+        {
+          "name": "Close Valve",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"valve\": {\n    \"target\": \"closed\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/devices/{{device_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["devices", "{{device_id}}"]
+            },
+            "description": "Mirrors valveUpdate('closed') in MoenSmartShutoff.groovy. Only applies to Smart Shutoff valve devices."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
